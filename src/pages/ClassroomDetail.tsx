@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, Globe, Music, Clock, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 
 // 仮のデータ（後でSupabaseから取得）
 const DUMMY_CLASSROOM = {
@@ -96,9 +97,27 @@ const ClassroomDetail = () => {
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("問い合わせ内容:", contactForm);
-    // 実際にはSupabaseに保存し、メール通知などを実装
-    alert("お問い合わせを送信しました。教室からの返信をお待ちください。");
+    
+    // フォームデータからメールリンクを作成
+    const subject = encodeURIComponent(`【ピアノサーチ】${classroom.name}への問い合わせ`);
+    const body = encodeURIComponent(
+      `以下の内容でお問い合わせがありました。\n\n` +
+      `お名前: ${contactForm.name}\n` +
+      `メールアドレス: ${contactForm.email}\n` +
+      `電話番号: ${contactForm.phone || "未入力"}\n\n` +
+      `お問い合わせ内容:\n${contactForm.message}\n\n` +
+      `※このメールはピアノサーチのお問い合わせフォームから自動送信されています。`
+    );
+    
+    // 教室のメールアドレスが設定されている場合はそちらに送信
+    if (classroom.email) {
+      window.location.href = `mailto:${classroom.email}?subject=${subject}&body=${body}`;
+      toast.success("メーラーを起動しています。メールアプリが開かない場合は、直接教室へお問い合わせください。");
+    } else {
+      toast.error("この教室のメールアドレスが設定されていません。お電話でお問い合わせください。");
+    }
+    
+    // フォームをリセット
     setContactForm({
       name: "",
       email: "",
@@ -118,7 +137,7 @@ const ClassroomDetail = () => {
               <Link to="/login">ログイン</Link>
             </Button>
             <Button asChild>
-              <Link to="/register">教室を掲載する</Link>
+              <Link to="/classroom/register">教室を掲載する</Link>
             </Button>
           </div>
         </div>
@@ -312,7 +331,7 @@ const ClassroomDetail = () => {
             </div>
             <Button type="submit" className="w-full md:w-auto">送信する</Button>
             <p className="text-xs text-gray-500 mt-2">
-              ※送信された内容は教室運営者に直接届きます。回答までお時間をいただく場合があります。
+              ※送信ボタンをクリックするとメーラー（メールアプリ）が起動し、教室運営者へ直接メールが送信されます。
             </p>
           </form>
         </div>
