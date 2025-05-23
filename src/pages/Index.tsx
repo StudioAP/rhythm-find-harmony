@@ -38,9 +38,11 @@ const Index = () => {
                 placeholder="エリアまたはキーワードで検索" 
                 className="bg-white text-lg h-12"
               />
-              <Button size="lg" className="h-12">
-                <Search className="mr-2" />
-                検索
+              <Button size="lg" className="h-12" asChild>
+                <Link to="/search">
+                  <Search className="mr-2" />
+                  検索
+                </Link>
               </Button>
             </div>
           </div>
