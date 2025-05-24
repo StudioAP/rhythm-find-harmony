@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
+import Auth from "./pages/Auth";
 import Search from "./pages/Search";
 import ClassroomDetail from "./pages/ClassroomDetail";
 import ClassroomRegistration from "./pages/ClassroomRegistration";
@@ -23,6 +24,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/search" element={<Search />} />
           <Route path="/classrooms/:id" element={<ClassroomDetail />} />
           <Route path="/classroom/register" element={<ClassroomRegistration />} />

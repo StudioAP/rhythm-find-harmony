@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Building, CreditCard, Edit, Eye, EyeOff, LogOut, Settings, Trash } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 
 // ダミーデータ
 const DUMMY_CLASSROOM = {
@@ -22,7 +24,50 @@ const DUMMY_CLASSROOM = {
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("classroom");
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
   const classroom = DUMMY_CLASSROOM;
+
+  // ログインチェック
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: "エラー",
+        description: "ログアウトに失敗しました",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "ログアウト完了",
+        description: "ログアウトしました",
+      });
+      navigate("/auth");
+    }
+  };
+
+  // ローディング中
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 未ログインの場合は何も表示しない（リダイレクト処理中）
+  if (!user) {
+    return null;
+  }
   
   // 掲載ステータスに基づいたバッジを表示
   const getStatusBadge = () => {
@@ -93,7 +138,7 @@ const Dashboard = () => {
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">教室管理ダッシュボード</h1>
-        <Button variant="outline" className="flex items-center">
+        <Button variant="outline" className="flex items-center" onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
           ログアウト
         </Button>
