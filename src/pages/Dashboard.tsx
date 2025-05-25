@@ -5,35 +5,64 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
-import { Building, CreditCard, Edit, Eye, EyeOff, LogOut, Settings, Trash } from "lucide-react";
+import { Building, CreditCard, Edit, Eye, EyeOff, LogOut, Settings, Trash, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-// ダミーデータ
-const DUMMY_CLASSROOM = {
-  id: "1",
-  name: "ヤマハ音楽教室 新宿校",
-  area: "東京都新宿区",
-  description: "ピアノとリトミックのクラスを提供する歴史ある音楽教室です。",
-  status: "unpaid", // unpaid, active, suspended
-  views: 128,
-  image: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-  publishedAt: null,
-};
+interface Classroom {
+  id: string;
+  name: string;
+  area: string;
+  description: string;
+  published: boolean;
+  image_url: string;
+  created_at: string;
+  updated_at: string;
+}
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("classroom");
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const { user, loading, signOut } = useAuth();
+  const [classroom, setClassroom] = useState<Classroom | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { user, signOut } = useAuth();
+  const { subscription, createCheckoutSession, openCustomerPortal, checkSubscriptionStatus } = useSubscription();
   const navigate = useNavigate();
-  const classroom = DUMMY_CLASSROOM;
 
   // ログインチェック
   useEffect(() => {
-    if (!loading && !user) {
+    if (!user) {
       navigate("/auth");
     }
-  }, [user, loading, navigate]);
+  }, [user, navigate]);
+
+  // 教室情報取得
+  useEffect(() => {
+    const fetchClassroom = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('classrooms')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          throw error;
+        }
+
+        setClassroom(data);
+      } catch (error) {
+        console.error('教室情報取得エラー:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClassroom();
+  }, [user]);
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -49,6 +78,47 @@ const Dashboard = () => {
         description: "ログアウトしました",
       });
       navigate("/auth");
+    }
+  };
+
+  const handleSubscription = async (plan: 'monthly' | 'yearly') => {
+    try {
+      await createCheckoutSession(plan);
+    } catch (error) {
+      toast({
+        title: "エラー",
+        description: "決済処理の開始に失敗しました",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const togglePublished = async () => {
+    if (!classroom) return;
+
+    try {
+      const { error } = await supabase
+        .from('classrooms')
+        .update({ 
+          published: !classroom.published,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', classroom.id);
+
+      if (error) throw error;
+
+      setClassroom(prev => prev ? { ...prev, published: !prev.published } : null);
+      
+      toast({
+        title: "更新完了",
+        description: `教室を${!classroom.published ? '公開' : '非公開'}にしました`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "エラー",
+        description: error.message || "公開状態の更新に失敗しました",
+        variant: "destructive",
+      });
     }
   };
 
@@ -71,67 +141,84 @@ const Dashboard = () => {
   
   // 掲載ステータスに基づいたバッジを表示
   const getStatusBadge = () => {
-    switch(classroom.status) {
-      case 'active':
-        return <Badge className="bg-green-500">掲載中</Badge>;
-      case 'unpaid':
-        return <Badge variant="outline" className="text-amber-500 border-amber-500">未掲載（掲載費未払い）</Badge>;
-      case 'suspended':
-        return <Badge variant="destructive">停止中</Badge>;
-      default:
-        return null;
+    if (!subscription.hasActiveSubscription) {
+      return <Badge variant="outline" className="text-amber-500 border-amber-500">未決済</Badge>;
     }
+    if (classroom?.published) {
+      return <Badge className="bg-green-500">公開中</Badge>;
+    }
+    return <Badge variant="outline">非公開</Badge>;
   };
 
   // 掲載ステータスに基づいたアクション表示
   const getStatusAction = () => {
-    switch(classroom.status) {
-      case 'active':
-        return (
-          <div className="flex flex-col space-y-2">
-            <p className="text-sm text-gray-500">
-              あなたの教室は現在掲載されています。<br />
-              次回の掲載費支払い日: 2025年6月23日
-            </p>
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm" className="flex items-center">
-                <CreditCard className="mr-2 h-4 w-4" />
-                掲載費支払い情報を更新する
-              </Button>
-              <Button variant="outline" size="sm" className="flex items-center text-red-500 hover:text-red-700">
-                <EyeOff className="mr-2 h-4 w-4" />
-                掲載を停止する
-              </Button>
-            </div>
-          </div>
-        );
-      case 'unpaid':
-        return (
-          <div className="flex flex-col space-y-2">
-            <p className="text-sm text-gray-500">
-              あなたの教室は未掲載です。掲載費のお支払いで公開できます。
-            </p>
-            <Button className="flex items-center" onClick={() => setPaymentModalOpen(true)}>
+    if (!subscription.hasActiveSubscription) {
+      return (
+        <div className="flex flex-col space-y-2">
+          <p className="text-sm text-gray-500">
+            教室を公開するには掲載費のお支払いが必要です。
+          </p>
+          <div className="space-y-2">
+            <Button 
+              className="flex items-center w-full" 
+              onClick={() => handleSubscription('monthly')}
+            >
               <CreditCard className="mr-2 h-4 w-4" />
-              掲載費を支払い公開する（月額500円）
+              月額プラン（500円/月）で始める
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex items-center w-full" 
+              onClick={() => handleSubscription('yearly')}
+            >
+              <CreditCard className="mr-2 h-4 w-4" />
+              年額プラン（5,000円/年）で始める
             </Button>
           </div>
-        );
-      case 'suspended':
-        return (
-          <div className="flex flex-col space-y-2">
-            <p className="text-sm text-gray-500">
-              あなたの教室の掲載は停止されています。
-            </p>
-            <Button className="flex items-center" onClick={() => setPaymentModalOpen(true)}>
-              <Eye className="mr-2 h-4 w-4" />
-              掲載を再開する
-            </Button>
-          </div>
-        );
-      default:
-        return null;
+        </div>
+      );
     }
+
+    return (
+      <div className="flex flex-col space-y-2">
+        <p className="text-sm text-gray-500">
+          {subscription.subscriptionEndDate && (
+            <>次回更新日: {new Date(subscription.subscriptionEndDate).toLocaleDateString('ja-JP')}</>
+          )}
+        </p>
+        <div className="flex space-x-2">
+          {classroom && (
+            <Button 
+              variant={classroom.published ? "outline" : "default"}
+              size="sm" 
+              className="flex items-center"
+              onClick={togglePublished}
+            >
+              {classroom.published ? (
+                <>
+                  <EyeOff className="mr-2 h-4 w-4" />
+                  非公開にする
+                </>
+              ) : (
+                <>
+                  <Eye className="mr-2 h-4 w-4" />
+                  公開する
+                </>
+              )}
+            </Button>
+          )}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center" 
+            onClick={openCustomerPortal}
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            決済管理
+          </Button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -159,15 +246,16 @@ const Dashboard = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xl">閲覧数</CardTitle>
+            <CardTitle className="text-xl">プラン情報</CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
             <div className="flex items-end space-x-2">
-              <span className="text-3xl font-bold">{classroom.views}</span>
-              <span className="text-sm text-gray-500 mb-1">表示回数</span>
+              <span className="text-3xl font-bold">
+                {subscription.planType === 'yearly' ? '年額' : subscription.planType === 'monthly' ? '月額' : '未契約'}
+              </span>
             </div>
             <p className="text-sm text-gray-500 mt-2">
-              過去30日間の統計
+              {subscription.hasActiveSubscription ? '契約中' : '契約なし'}
             </p>
           </CardContent>
         </Card>
@@ -202,41 +290,50 @@ const Dashboard = () => {
                   教室詳細
                 </div>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to={`/classrooms/${classroom.id}`} target="_blank">
-                      <Eye className="mr-2 h-4 w-4" />
-                      プレビュー
+                  {classroom && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/classrooms/${classroom.id}`} target="_blank">
+                        <Eye className="mr-2 h-4 w-4" />
+                        プレビュー
+                      </Link>
+                    </Button>
+                  )}
+                  <Button size="sm" asChild>
+                    <Link to="/classroom/register">
+                      <Edit className="mr-2 h-4 w-4" />
+                      {classroom ? '編集する' : '教室を登録する'}
                     </Link>
-                  </Button>
-                  <Button size="sm" className="flex items-center">
-                    <Edit className="mr-2 h-4 w-4" />
-                    編集する
                   </Button>
                 </div>
               </CardTitle>
               <CardDescription>
-                登録されている教室情報を確認・編集できます
+                {classroom ? '登録されている教室情報を確認・編集できます' : '教室情報を登録してください'}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="col-span-1">
-                  <img 
-                    src={classroom.image} 
-                    alt={classroom.name} 
-                    className="w-full h-48 object-cover rounded-md" 
-                  />
-                </div>
-                <div className="col-span-2">
-                  <h3 className="text-xl font-bold mb-2">{classroom.name}</h3>
-                  <p className="text-muted-foreground mb-2">{classroom.area}</p>
-                  <p className="mb-4">{classroom.description}</p>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <span>最終更新日: 2025年5月15日</span>
+            {classroom && (
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="col-span-1">
+                    {classroom.image_url && (
+                      <img 
+                        src={classroom.image_url} 
+                        alt={classroom.name} 
+                        className="w-full h-48 object-cover rounded-md" 
+                      />
+                    )}
+                  </div>
+                  <div className="col-span-2">
+                    <h3 className="text-xl font-bold mb-2">{classroom.name}</h3>
+                    <p className="text-muted-foreground mb-2">{classroom.area}</p>
+                    <p className="mb-4">{classroom.description}</p>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      <span>最終更新日: {new Date(classroom.updated_at).toLocaleDateString('ja-JP')}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
+              </CardContent>
+            )}
           </Card>
         </TabsContent>
 
@@ -248,7 +345,7 @@ const Dashboard = () => {
                 アカウント設定
               </CardTitle>
               <CardDescription>
-                アカウント情報やパスワードなどの設定を変更できます
+                アカウント情報や決済設定を管理できます
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -257,58 +354,24 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm text-gray-500">メールアドレス</label>
-                    <div>example@example.com</div>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">名前</label>
-                    <div>山田 太郎</div>
+                    <div>{user.email}</div>
                   </div>
                 </div>
               </div>
 
               <div>
-                <h3 className="font-medium mb-2">掲載費支払い設定</h3>
-                <div>
-                  <label className="text-sm text-gray-500">支払い方法</label>
-                  <div className="flex items-center">
-                    <div className="mr-2">クレジットカード（**** **** **** 4242）</div>
-                    <Button variant="ghost" size="sm">変更する</Button>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="font-medium mb-2">アカウントセキュリティ</h3>
-                <Button variant="outline">パスワードを変更する</Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="text-red-500">危険な操作</CardTitle>
-              <CardDescription>
-                これらの操作は元に戻すことができません
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col space-y-4">
-                <div>
-                  <Button variant="destructive" className="flex items-center">
-                    <Trash className="mr-2 h-4 w-4" />
-                    教室情報を削除する
+                <h3 className="font-medium mb-2">決済設定</h3>
+                <div className="space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center"
+                    onClick={openCustomerPortal}
+                  >
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    決済情報を管理する
                   </Button>
-                  <p className="text-sm text-gray-500 mt-1">
-                    この操作を行うと、登録されている教室情報がすべて削除されます
-                  </p>
-                </div>
-                <div>
-                  <Button variant="destructive" className="flex items-center">
-                    <Trash className="mr-2 h-4 w-4" />
-                    アカウントを削除する
-                  </Button>
-                  <p className="text-sm text-gray-500 mt-1">
-                    この操作を行うと、アカウントと関連するすべてのデータが削除されます
+                  <p className="text-sm text-gray-500">
+                    Stripeの決済管理画面で支払い方法の変更や履歴確認ができます
                   </p>
                 </div>
               </div>
@@ -316,28 +379,6 @@ const Dashboard = () => {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* 支払いダイアログはここに実装 */}
-      {paymentModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">掲載費のお支払い</h2>
-            <p className="mb-4">
-              月額500円の掲載費のお支払いで、あなたの教室情報を公開します。
-              キャンセルはいつでも可能です。
-            </p>
-            <div className="space-y-4">
-              <Button className="w-full">
-                <CreditCard className="mr-2 h-4 w-4" />
-                クレジットカードで支払う
-              </Button>
-              <Button variant="outline" onClick={() => setPaymentModalOpen(false)} className="w-full">
-                キャンセル
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

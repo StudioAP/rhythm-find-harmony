@@ -9,6 +9,116 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      classrooms: {
+        Row: {
+          address: string | null
+          age_range: string | null
+          area: string | null
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          image_url: string | null
+          lesson_types: string[] | null
+          monthly_fee_max: number | null
+          monthly_fee_min: number | null
+          name: string
+          parking_available: boolean | null
+          phone: string | null
+          published: boolean | null
+          trial_lesson_available: boolean | null
+          updated_at: string
+          user_id: string
+          website_url: string | null
+        }
+        Insert: {
+          address?: string | null
+          age_range?: string | null
+          area?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          image_url?: string | null
+          lesson_types?: string[] | null
+          monthly_fee_max?: number | null
+          monthly_fee_min?: number | null
+          name: string
+          parking_available?: boolean | null
+          phone?: string | null
+          published?: boolean | null
+          trial_lesson_available?: boolean | null
+          updated_at?: string
+          user_id: string
+          website_url?: string | null
+        }
+        Update: {
+          address?: string | null
+          age_range?: string | null
+          area?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          image_url?: string | null
+          lesson_types?: string[] | null
+          monthly_fee_max?: number | null
+          monthly_fee_min?: number | null
+          name?: string
+          parking_available?: boolean | null
+          phone?: string | null
+          published?: boolean | null
+          trial_lesson_available?: boolean | null
+          updated_at?: string
+          user_id?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      payment_history: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          status: string
+          stripe_payment_intent_id: string | null
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          status: string
+          stripe_payment_intent_id?: string | null
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_history_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           classroom_name: string | null
@@ -36,12 +146,81 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          amount: number
+          canceled_at: string | null
+          created_at: string
+          currency: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_type: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_subscription_id: string | null
+          trial_end: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          canceled_at?: string | null
+          created_at?: string
+          currency?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_type?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          canceled_at?: string | null
+          created_at?: string
+          currency?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_type?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      auto_unpublish_expired_classrooms: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      can_publish_classroom: {
+        Args: { classroom_id: string }
+        Returns: boolean
+      }
+      check_user_subscription_status: {
+        Args: { user_uuid: string }
+        Returns: {
+          has_active_subscription: boolean
+          subscription_end_date: string
+          can_publish: boolean
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

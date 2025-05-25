@@ -1,43 +1,16 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Search as SearchIcon, MapPin, Music, Calendar, Clock } from "lucide-react";
+import { Search as SearchIcon, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
-
-// 仮のデータ（実際の実装ではSupabaseから取得）
-const DUMMY_CLASSROOMS = [
-  {
-    id: "1",
-    name: "ヤマハ音楽教室 新宿校",
-    image: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-    area: "東京都新宿区",
-    description: "ピアノとリトミックのクラスを提供する歴史ある音楽教室です",
-    features: ["子供向け", "大人向け", "初心者歓迎"]
-  },
-  {
-    id: "2",
-    name: "メロディピアノ教室",
-    image: "https://images.unsplash.com/photo-1552422535-c45813c61732?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-    area: "東京都渋谷区",
-    description: "アットホームな雰囲気で、一人ひとりに合わせたレッスンを提供します",
-    features: ["子供向け", "リトミック", "発表会あり"]
-  },
-  {
-    id: "3",
-    name: "ソナタ音楽教室",
-    image: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-    area: "東京都世田谷区",
-    description: "クラシックから現代音楽まで幅広いジャンルに対応しています",
-    features: ["大人向け", "上級者向け", "オンラインレッスン"]
-  }
-];
+import { useClassrooms } from "@/hooks/useClassrooms";
 
 const prefectures = [
-  "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
+  "", "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
   "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",
   "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県",
   "静岡県", "愛知県", "三重県", "滋賀県", "京都府", "大阪府", "兵庫県",
@@ -66,9 +39,10 @@ const features = [
 
 const Search = () => {
   const [keyword, setKeyword] = useState("");
-  const [selectedPrefecture, setSelectedPrefecture] = useState("東京都");
+  const [selectedPrefecture, setSelectedPrefecture] = useState("");
   const [selectedAges, setSelectedAges] = useState<string[]>([]);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+  const { classrooms, loading, fetchPublishedClassrooms } = useClassrooms();
   
   const toggleAge = (id: string) => {
     setSelectedAges(prev => 
@@ -82,6 +56,20 @@ const Search = () => {
     );
   };
 
+  const handleSearch = () => {
+    fetchPublishedClassrooms({
+      area: selectedPrefecture,
+      keyword,
+      ageGroups: selectedAges,
+      features: selectedFeatures,
+    });
+  };
+
+  // 初回読み込み
+  useEffect(() => {
+    fetchPublishedClassrooms();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
       {/* Header */}
@@ -90,10 +78,10 @@ const Search = () => {
           <Link to="/" className="text-2xl font-bold text-primary">Piano Search</Link>
           <div className="space-x-2">
             <Button variant="outline" asChild>
-              <Link to="/login">ログイン</Link>
+              <Link to="/auth">ログイン</Link>
             </Button>
             <Button asChild>
-              <Link to="/register">教室を掲載する</Link>
+              <Link to="/classroom/register">教室を掲載する</Link>
             </Button>
           </div>
         </div>
@@ -113,7 +101,8 @@ const Search = () => {
                 value={selectedPrefecture}
                 onChange={(e) => setSelectedPrefecture(e.target.value)}
               >
-                {prefectures.map(pref => (
+                <option value="">すべてのエリア</option>
+                {prefectures.slice(1).map(pref => (
                   <option key={pref} value={pref}>{pref}</option>
                 ))}
               </select>
@@ -174,7 +163,7 @@ const Search = () => {
             </div>
           </div>
 
-          <Button className="mt-6 w-full md:w-auto" size="lg">
+          <Button className="mt-6 w-full md:w-auto" size="lg" onClick={handleSearch}>
             <SearchIcon className="mr-2 h-4 w-4" />
             この条件で検索する
           </Button>
@@ -182,40 +171,59 @@ const Search = () => {
 
         {/* 検索結果 */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">検索結果</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {DUMMY_CLASSROOMS.map((classroom) => (
-              <Link to={`/classrooms/${classroom.id}`} key={classroom.id}>
-                <Card className="h-full hover:shadow-lg transition-shadow">
-                  <div className="aspect-video w-full overflow-hidden rounded-t-lg">
-                    <img 
-                      src={classroom.image} 
-                      alt={classroom.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <CardContent className="pt-4">
-                    <h3 className="text-xl font-bold mb-2">{classroom.name}</h3>
-                    <div className="flex items-center text-gray-600 mb-2">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      <span className="text-sm">{classroom.area}</span>
+          <h2 className="text-2xl font-bold mb-4">
+            検索結果 {!loading && `(${classrooms.length}件)`}
+          </h2>
+          
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-gray-600">検索中...</p>
+            </div>
+          ) : classrooms.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600">検索条件に一致する教室が見つかりませんでした。</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {classrooms.map((classroom) => (
+                <Link to={`/classrooms/${classroom.id}`} key={classroom.id}>
+                  <Card className="h-full hover:shadow-lg transition-shadow">
+                    <div className="aspect-video w-full overflow-hidden rounded-t-lg">
+                      <img 
+                        src={classroom.image_url || "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"} 
+                        alt={classroom.name} 
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <p className="text-gray-600 mb-3 line-clamp-2">{classroom.description}</p>
-                    <div className="flex flex-wrap gap-1">
-                      {classroom.features.map(feature => (
-                        <span 
-                          key={feature} 
-                          className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full"
-                        >
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+                    <CardContent className="pt-4">
+                      <h3 className="text-xl font-bold mb-2">{classroom.name}</h3>
+                      <div className="flex items-center text-gray-600 mb-2">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        <span className="text-sm">{classroom.area}</span>
+                      </div>
+                      <p className="text-gray-600 mb-3 line-clamp-2">{classroom.description}</p>
+                      <div className="flex flex-wrap gap-1">
+                        {classroom.lesson_types?.map(type => (
+                          <span 
+                            key={type} 
+                            className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full"
+                          >
+                            {type}
+                          </span>
+                        ))}
+                        {classroom.trial_lesson_available && (
+                          <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
+                            体験レッスンあり
+                          </span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
