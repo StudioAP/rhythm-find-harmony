@@ -4,12 +4,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link, useNavigate } from "react-router-dom";
-import { Building, CreditCard, Edit, Eye, EyeOff, LogOut, Settings, Trash, Calendar } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Building, CreditCard, Edit, Eye, EyeOff, LogOut, Settings, Trash, Calendar, RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Classroom {
   id: string;
@@ -26,8 +27,16 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("classroom");
   const [classroom, setClassroom] = useState<Classroom | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchParams] = useSearchParams();
   const { user, signOut } = useAuth();
-  const { subscription, createCheckoutSession, openCustomerPortal, checkSubscriptionStatus } = useSubscription();
+  const { 
+    subscription, 
+    loading: subscriptionLoading,
+    refreshing,
+    createCheckoutSession, 
+    openCustomerPortal, 
+    refreshSubscriptionStatus 
+  } = useSubscription();
   const navigate = useNavigate();
 
   // ログインチェック
@@ -36,6 +45,29 @@ const Dashboard = () => {
       navigate("/auth");
     }
   }, [user, navigate]);
+
+  // URLパラメータをチェックして決済結果を表示
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+    
+    if (success === 'true') {
+      toast({
+        title: "決済完了",
+        description: "サブスクリプションの決済が完了しました",
+      });
+      // サブスクリプション状態を更新
+      setTimeout(() => {
+        refreshSubscriptionStatus();
+      }, 2000);
+    } else if (canceled === 'true') {
+      toast({
+        title: "決済がキャンセルされました",
+        description: "決済はキャンセルされました。いつでも再度お試しいただけます。",
+        variant: "destructive",
+      });
+    }
+  }, [searchParams, refreshSubscriptionStatus]);
 
   // 教室情報取得
   useEffect(() => {
@@ -47,15 +79,26 @@ const Dashboard = () => {
           .from('classrooms')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') {
-          throw error;
+        if (error) {
+          console.error('教室情報取得エラー:', error);
+          toast({
+            title: "エラー",
+            description: "教室情報の取得に失敗しました",
+            variant: "destructive",
+          });
+          return;
         }
 
         setClassroom(data);
       } catch (error) {
         console.error('教室情報取得エラー:', error);
+        toast({
+          title: "エラー",
+          description: "教室情報の取得に失敗しました",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
@@ -65,19 +108,24 @@ const Dashboard = () => {
   }, [user]);
 
   const handleSignOut = async () => {
-    const { error } = await signOut();
-    if (error) {
-      toast({
-        title: "エラー",
-        description: "ログアウトに失敗しました",
-        variant: "destructive",
-      });
-    } else {
+    try {
+      const { error } = await signOut();
+      if (error) {
+        throw error;
+      }
+      
       toast({
         title: "ログアウト完了",
         description: "ログアウトしました",
       });
       navigate("/auth");
+    } catch (error) {
+      console.error('ログアウトエラー:', error);
+      toast({
+        title: "エラー",
+        description: "ログアウトに失敗しました",
+        variant: "destructive",
+      });
     }
   };
 
@@ -85,16 +133,22 @@ const Dashboard = () => {
     try {
       await createCheckoutSession(plan);
     } catch (error) {
-      toast({
-        title: "エラー",
-        description: "決済処理の開始に失敗しました",
-        variant: "destructive",
-      });
+      // エラーハンドリングはuseSubscription内で処理済み
     }
   };
 
   const togglePublished = async () => {
     if (!classroom) return;
+
+    // サブスクリプションがない場合は公開できない
+    if (!subscription.hasActiveSubscription && !classroom.published) {
+      toast({
+        title: "公開できません",
+        description: "教室を公開するには有効なサブスクリプションが必要です",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -114,6 +168,7 @@ const Dashboard = () => {
         description: `教室を${!classroom.published ? '公開' : '非公開'}にしました`,
       });
     } catch (error: any) {
+      console.error('公開状態更新エラー:', error);
       toast({
         title: "エラー",
         description: error.message || "公開状態の更新に失敗しました",
@@ -123,7 +178,7 @@ const Dashboard = () => {
   };
 
   // ローディング中
-  if (loading) {
+  if (loading || subscriptionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -142,26 +197,30 @@ const Dashboard = () => {
   // 掲載ステータスに基づいたバッジを表示
   const getStatusBadge = () => {
     if (!subscription.hasActiveSubscription) {
-      return <Badge variant="outline" className="text-amber-500 border-amber-500">未決済</Badge>;
+      return <Badge variant="outline" className="text-amber-600 border-amber-600">未決済</Badge>;
     }
     if (classroom?.published) {
-      return <Badge className="bg-green-500">公開中</Badge>;
+      return <Badge className="bg-green-500 hover:bg-green-600">公開中</Badge>;
     }
-    return <Badge variant="outline">非公開</Badge>;
+    return <Badge variant="outline" className="text-gray-600 border-gray-600">非公開</Badge>;
   };
 
   // 掲載ステータスに基づいたアクション表示
   const getStatusAction = () => {
     if (!subscription.hasActiveSubscription) {
       return (
-        <div className="flex flex-col space-y-2">
-          <p className="text-sm text-gray-500">
-            教室を公開するには掲載費のお支払いが必要です。
-          </p>
+        <div className="space-y-4">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              教室を公開するには掲載費のお支払いが必要です。
+            </AlertDescription>
+          </Alert>
           <div className="space-y-2">
             <Button 
               className="flex items-center w-full" 
               onClick={() => handleSubscription('monthly')}
+              disabled={subscriptionLoading}
             >
               <CreditCard className="mr-2 h-4 w-4" />
               月額プラン（500円/月）で始める
@@ -170,6 +229,7 @@ const Dashboard = () => {
               variant="outline" 
               className="flex items-center w-full" 
               onClick={() => handleSubscription('yearly')}
+              disabled={subscriptionLoading}
             >
               <CreditCard className="mr-2 h-4 w-4" />
               年額プラン（5,000円/年）で始める
@@ -180,19 +240,23 @@ const Dashboard = () => {
     }
 
     return (
-      <div className="flex flex-col space-y-2">
-        <p className="text-sm text-gray-500">
-          {subscription.subscriptionEndDate && (
-            <>次回更新日: {new Date(subscription.subscriptionEndDate).toLocaleDateString('ja-JP')}</>
-          )}
-        </p>
-        <div className="flex space-x-2">
+      <div className="space-y-4">
+        {subscription.subscriptionEndDate && (
+          <Alert>
+            <CheckCircle className="h-4 w-4" />
+            <AlertDescription>
+              次回更新日: {new Date(subscription.subscriptionEndDate).toLocaleDateString('ja-JP')}
+            </AlertDescription>
+          </Alert>
+        )}
+        <div className="flex flex-col space-y-2">
           {classroom && (
             <Button 
               variant={classroom.published ? "outline" : "default"}
               size="sm" 
               className="flex items-center"
               onClick={togglePublished}
+              disabled={subscriptionLoading}
             >
               {classroom.published ? (
                 <>
@@ -207,15 +271,28 @@ const Dashboard = () => {
               )}
             </Button>
           )}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center" 
-            onClick={openCustomerPortal}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            決済管理
-          </Button>
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center flex-1" 
+              onClick={openCustomerPortal}
+              disabled={subscriptionLoading}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              決済管理
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center" 
+              onClick={refreshSubscriptionStatus}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              更新
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -354,7 +431,7 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm text-gray-500">メールアドレス</label>
-                    <div>{user.email}</div>
+                    <div className="font-medium">{user.email}</div>
                   </div>
                 </div>
               </div>
@@ -366,12 +443,31 @@ const Dashboard = () => {
                     variant="outline" 
                     className="flex items-center"
                     onClick={openCustomerPortal}
+                    disabled={subscriptionLoading}
                   >
                     <CreditCard className="mr-2 h-4 w-4" />
                     決済情報を管理する
                   </Button>
                   <p className="text-sm text-gray-500">
                     Stripeの決済管理画面で支払い方法の変更や履歴確認ができます
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-medium mb-2">サブスクリプション状態</h3>
+                <div className="space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center"
+                    onClick={refreshSubscriptionStatus}
+                    disabled={refreshing}
+                  >
+                    <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                    状態を更新
+                  </Button>
+                  <p className="text-sm text-gray-500">
+                    決済後やプラン変更後に状態を手動で更新できます
                   </p>
                 </div>
               </div>

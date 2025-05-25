@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 export interface Classroom {
   id: string;
@@ -27,6 +28,7 @@ export interface Classroom {
 export const useClassrooms = () => {
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchPublishedClassrooms = async (filters?: {
     area?: string;
@@ -36,6 +38,7 @@ export const useClassrooms = () => {
   }) => {
     try {
       setLoading(true);
+      setError(null);
       
       let query = supabase
         .from('classrooms')
@@ -59,7 +62,10 @@ export const useClassrooms = () => {
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('教室検索エラー:', error);
+        throw new Error('教室情報の取得に失敗しました');
+      }
 
       // フロントエンドでの追加フィルタリング
       let filteredData = data || [];
@@ -118,8 +124,16 @@ export const useClassrooms = () => {
 
       setClassrooms(filteredData);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '教室データの取得に失敗しました';
       console.error('教室データ取得エラー:', error);
+      setError(errorMessage);
       setClassrooms([]);
+      
+      toast({
+        title: "エラー",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -137,12 +151,24 @@ export const useClassrooms = () => {
         .eq('published', true)
         .eq('subscriptions.status', 'active')
         .gte('subscriptions.current_period_end', new Date().toISOString())
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('教室詳細取得エラー:', error);
+        throw new Error('教室詳細の取得に失敗しました');
+      }
+      
       return data;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '教室詳細の取得に失敗しました';
       console.error('教室詳細取得エラー:', error);
+      
+      toast({
+        title: "エラー",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
       return null;
     }
   };
@@ -150,6 +176,7 @@ export const useClassrooms = () => {
   return {
     classrooms,
     loading,
+    error,
     fetchPublishedClassrooms,
     getClassroomById,
   };
