@@ -11,9 +11,15 @@ import { useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 
 const Auth = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // ログイン用の状態
+  const [signinEmail, setSigninEmail] = useState("");
+  const [signinPassword, setSigninPassword] = useState("");
+  
+  // 新規登録用の状態
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
   const [name, setName] = useState("");
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const { signIn, signUp, user, loading } = useAuth();
@@ -26,14 +32,19 @@ const Auth = () => {
     }
   }, [user, loading, navigate]);
 
+  // タブ切り替え時にエラーをクリア
+  const handleTabChange = () => {
+    setError("");
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    console.log("Attempting to sign in with:", email, password);
+    console.log("Attempting to sign in with:", signinEmail, signinPassword);
 
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(signinEmail, signinPassword);
     
     if (error) {
       setError(
@@ -57,7 +68,9 @@ const Auth = () => {
     setIsLoading(true);
     setError("");
 
-    const { error } = await signUp(email, password, name);
+    console.log("Attempting to sign up with:", signupEmail, signupPassword, name);
+
+    const { error } = await signUp(signupEmail, signupPassword, name);
     
     if (error) {
       if (error.message.includes("User already registered")) {
@@ -87,7 +100,7 @@ const Auth = () => {
       </div>
 
       <Card className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Tabs defaultValue="signin" className="w-full">
+        <Tabs defaultValue="signin" className="w-full" onValueChange={handleTabChange}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">ログイン</TabsTrigger>
             <TabsTrigger value="signup">新規登録</TabsTrigger>
@@ -112,8 +125,8 @@ const Auth = () => {
                   <Input
                     id="signin-email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={signinEmail}
+                    onChange={(e) => setSigninEmail(e.target.value)}
                     required
                     placeholder="your-email@example.com"
                   />
@@ -123,8 +136,8 @@ const Auth = () => {
                   <Input
                     id="signin-password"
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={signinPassword}
+                    onChange={(e) => setSigninPassword(e.target.value)}
                     required
                   />
                 </div>
@@ -165,8 +178,8 @@ const Auth = () => {
                   <Input
                     id="signup-email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
                     required
                     placeholder="your-email@example.com"
                   />
@@ -176,8 +189,8 @@ const Auth = () => {
                   <Input
                     id="signup-password"
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={signupPassword}
+                    onChange={(e) => setSignupPassword(e.target.value)}
                     required
                     placeholder="6文字以上"
                   />
