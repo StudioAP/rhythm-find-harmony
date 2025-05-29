@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Building, CreditCard, Edit, Eye, EyeOff, LogOut, Settings, Trash, Calendar, RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
+import { Building, CreditCard, Edit, Eye, EyeOff, LogOut, Settings, Trash, Calendar, RefreshCw, AlertCircle, CheckCircle, Home } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "@/hooks/use-toast";
@@ -18,9 +17,13 @@ interface Classroom {
   area: string;
   description: string;
   published: boolean;
+  draft_saved: boolean;
+  last_draft_saved_at: string | null;
   image_url: string;
   created_at: string;
   updated_at: string;
+  thumbnail_url?: string;
+  image_urls?: string[];
 }
 
 const Dashboard = () => {
@@ -39,12 +42,12 @@ const Dashboard = () => {
   } = useSubscription();
   const navigate = useNavigate();
 
-  // ログインチェック
+  // ログインチェック（認証状態確定後のみ）
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
       navigate("/auth");
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
 
   // URLパラメータをチェックして決済結果を表示
   useEffect(() => {
@@ -60,14 +63,20 @@ const Dashboard = () => {
       setTimeout(() => {
         refreshSubscriptionStatus();
       }, 2000);
+      
+      // URLパラメータをクリアして無限ループを防ぐ
+      navigate('/dashboard', { replace: true });
     } else if (canceled === 'true') {
       toast({
         title: "決済がキャンセルされました",
         description: "決済はキャンセルされました。いつでも再度お試しいただけます。",
         variant: "destructive",
       });
+      
+      // URLパラメータをクリアして無限ループを防ぐ
+      navigate('/dashboard', { replace: true });
     }
-  }, [searchParams, refreshSubscriptionStatus]);
+  }, [searchParams, refreshSubscriptionStatus, navigate]);
 
   // 教室情報取得
   useEffect(() => {
@@ -91,7 +100,7 @@ const Dashboard = () => {
           return;
         }
 
-        setClassroom(data);
+        setClassroom(data as unknown as Classroom);
       } catch (error) {
         console.error('教室情報取得エラー:', error);
         toast({
@@ -129,9 +138,9 @@ const Dashboard = () => {
     }
   };
 
-  const handleSubscription = async (plan: 'monthly' | 'yearly') => {
+  const handleSubscription = async () => {
     try {
-      await createCheckoutSession(plan);
+      await createCheckoutSession();
     } catch (error) {
       // エラーハンドリングはuseSubscription内で処理済み
     }
@@ -167,11 +176,11 @@ const Dashboard = () => {
         title: "更新完了",
         description: `教室を${!classroom.published ? '公開' : '非公開'}にしました`,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('公開状態更新エラー:', error);
       toast({
         title: "エラー",
-        description: error.message || "公開状態の更新に失敗しました",
+        description: (error as Error).message || "公開状態の更新に失敗しました",
         variant: "destructive",
       });
     }
@@ -196,10 +205,16 @@ const Dashboard = () => {
   
   // 掲載ステータスに基づいたバッジを表示
   const getStatusBadge = () => {
+    if (!classroom) {
+      return <Badge variant="outline" className="text-gray-500 border-gray-400">未登録</Badge>;
+    }
+    if (classroom.draft_saved && !classroom.published && !subscription.hasActiveSubscription) {
+      return <Badge variant="outline" className="text-blue-600 border-blue-600">下書き保存済み</Badge>;
+    }
     if (!subscription.hasActiveSubscription) {
       return <Badge variant="outline" className="text-amber-600 border-amber-600">未決済</Badge>;
     }
-    if (classroom?.published) {
+    if (classroom.published) {
       return <Badge className="bg-green-500 hover:bg-green-600">公開中</Badge>;
     }
     return <Badge variant="outline" className="text-gray-600 border-gray-600">非公開</Badge>;
@@ -207,6 +222,55 @@ const Dashboard = () => {
 
   // 掲載ステータスに基づいたアクション表示
   const getStatusAction = () => {
+    // 教室未登録の場合
+    if (!classroom) {
+      return (
+        <div className="space-y-4">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              まず教室情報を登録してください（無料）
+            </AlertDescription>
+          </Alert>
+          <Button className="w-full" asChild>
+            <Link to="/classroom/register">
+              教室情報を登録する（無料）
+            </Link>
+          </Button>
+        </div>
+      );
+    }
+
+    // 下書き保存済み、未決済の場合
+    if (classroom.draft_saved && !subscription.hasActiveSubscription) {
+      return (
+        <div className="space-y-4">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              教室情報は保存済みです。公開には月額500円の決済が必要です。
+            </AlertDescription>
+          </Alert>
+          <div className="space-y-2">
+            <Button 
+              className="flex items-center w-full" 
+              onClick={() => handleSubscription()}
+              disabled={subscriptionLoading}
+            >
+              <CreditCard className="mr-2 h-4 w-4" />
+              月額500円で掲載を開始する
+            </Button>
+            <Button variant="outline" className="w-full" asChild>
+              <Link to="/classroom/register">
+                下書きを編集する
+              </Link>
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    // サブスクリプションなしの場合
     if (!subscription.hasActiveSubscription) {
       return (
         <div className="space-y-4">
@@ -219,20 +283,11 @@ const Dashboard = () => {
           <div className="space-y-2">
             <Button 
               className="flex items-center w-full" 
-              onClick={() => handleSubscription('monthly')}
+              onClick={() => handleSubscription()}
               disabled={subscriptionLoading}
             >
               <CreditCard className="mr-2 h-4 w-4" />
-              月額プラン（500円/月）で始める
-            </Button>
-            <Button 
-              variant="outline" 
-              className="flex items-center w-full" 
-              onClick={() => handleSubscription('yearly')}
-              disabled={subscriptionLoading}
-            >
-              <CreditCard className="mr-2 h-4 w-4" />
-              年額プラン（5,000円/年）で始める
+              月額500円で掲載を開始する
             </Button>
           </div>
         </div>
@@ -302,10 +357,18 @@ const Dashboard = () => {
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">教室管理ダッシュボード</h1>
+        <div className="flex space-x-2">
+          <Button variant="outline" className="flex items-center" asChild>
+            <Link to="/">
+              <Home className="mr-2 h-4 w-4" />
+              教室検索画面に戻る
+            </Link>
+          </Button>
         <Button variant="outline" className="flex items-center" onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
           ログアウト
         </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -328,7 +391,7 @@ const Dashboard = () => {
           <CardContent className="pt-4">
             <div className="flex items-end space-x-2">
               <span className="text-3xl font-bold">
-                {subscription.planType === 'yearly' ? '年額' : subscription.planType === 'monthly' ? '月額' : '未契約'}
+                {subscription.hasActiveSubscription ? '月額500円' : '未契約'}
               </span>
             </div>
             <p className="text-sm text-gray-500 mt-2">
@@ -369,7 +432,7 @@ const Dashboard = () => {
                 <div className="flex space-x-2">
                   {classroom && (
                     <Button variant="outline" size="sm" asChild>
-                      <Link to={`/classrooms/${classroom.id}`} target="_blank">
+                      <Link to={`/classrooms/${classroom.id}?preview=true`} target="_blank">
                         <Eye className="mr-2 h-4 w-4" />
                         プレビュー
                       </Link>
@@ -391,13 +454,15 @@ const Dashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="col-span-1">
-                    {classroom.image_url && (
-                      <img 
-                        src={classroom.image_url} 
-                        alt={classroom.name} 
-                        className="w-full h-48 object-cover rounded-md" 
-                      />
-                    )}
+                    <img 
+                      src={
+                        classroom.thumbnail_url ||
+                        (classroom.image_urls && classroom.image_urls[0]) ||
+                        "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
+                      }
+                      alt={classroom.name} 
+                      className="w-full h-48 object-cover rounded-md" 
+                    />
                   </div>
                   <div className="col-span-2">
                     <h3 className="text-xl font-bold mb-2">{classroom.name}</h3>

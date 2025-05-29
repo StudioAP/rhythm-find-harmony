@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +35,18 @@ const features = [
   { id: "individual", label: "個人レッスン" },
   { id: "eurythmics", label: "リトミック" }
 ];
+
+// レッスンタイプの日本語変換
+const translateLessonType = (type: string) => {
+  const typeMap: { [key: string]: string } = {
+    'piano': 'ピアノ',
+    'eurythmics': 'リトミック',
+    'solfege': 'ソルフェージュ',
+    'ensemble': 'アンサンブル',
+    'composition': '作曲'
+  };
+  return typeMap[type] || type;
+};
 
 const Search = () => {
   const [keyword, setKeyword] = useState("");
@@ -190,9 +201,13 @@ const Search = () => {
                 <Link to={`/classrooms/${classroom.id}`} key={classroom.id}>
                   <Card className="h-full hover:shadow-lg transition-shadow">
                     <div className="aspect-video w-full overflow-hidden rounded-t-lg">
-                      <img 
-                        src={classroom.image_url || "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"} 
-                        alt={classroom.name} 
+                      <img
+                        src={
+                          classroom.thumbnail_url ||
+                          (classroom.image_urls && classroom.image_urls[0]) ||
+                          "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
+                        }
+                        alt={classroom.name}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -209,7 +224,7 @@ const Search = () => {
                             key={type} 
                             className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full"
                           >
-                            {type}
+                            {translateLessonType(type)}
                           </span>
                         ))}
                         {classroom.trial_lesson_available && (

@@ -1,4 +1,4 @@
-
+// @ts-nocheck - Edge Function (Deno環境) 専用
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -27,8 +27,7 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("ユーザーが認証されていません");
 
-    const { plan } = await req.json();
-    
+    // シンプルな月額500円プランのみ
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
     });
@@ -44,13 +43,12 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    // プラン設定
-    const plans = {
-      monthly: { amount: 50000, interval: "month" }, // 500円/月
-      yearly: { amount: 500000, interval: "year" }   // 5000円/年
+    // 月額500円固定プラン
+    const planConfig = {
+      amount: 500,
+      interval: "month",
+      productName: "ピアノ教室掲載サービス"
     };
-    
-    const selectedPlan = plans[plan as keyof typeof plans] || plans.monthly;
 
     // Stripe Checkout セッションを作成
     const session = await stripe.checkout.sessions.create({
@@ -61,10 +59,10 @@ serve(async (req) => {
           price_data: {
             currency: "jpy",
             product_data: { 
-              name: `ピアノ教室掲載サービス（${plan === 'yearly' ? '年額' : '月額'}プラン）` 
+              name: planConfig.productName 
             },
-            unit_amount: selectedPlan.amount,
-            recurring: { interval: selectedPlan.interval },
+            unit_amount: planConfig.amount,
+            recurring: { interval: planConfig.interval },
           },
           quantity: 1,
         },
@@ -74,7 +72,7 @@ serve(async (req) => {
       cancel_url: `${req.headers.get("origin")}/dashboard?canceled=true`,
       metadata: {
         user_id: user.id,
-        plan_type: plan,
+        plan_type: "monthly",
       },
     });
 

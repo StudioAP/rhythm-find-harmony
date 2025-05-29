@@ -29,11 +29,25 @@ git clone <YOUR_GIT_URL>
 # Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
+# Step 3: Set up environment variables
+cp .env.example .env
+# Edit .env file with your actual Supabase credentials
+
+# Step 4: Install the necessary dependencies.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Step 5: Start the development server with auto-reloading and an instant preview.
 npm run dev
+```
+
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+VITE_SUPABASE_URL=your_supabase_url_here
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+NODE_ENV=development
 ```
 
 **Edit a file directly in GitHub**
@@ -49,6 +63,11 @@ npm run dev
 - Select the "Codespaces" tab.
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
+
+## 📚 開発ドキュメント
+
+- **[開発ガイドライン](docs/DEVELOPMENT_GUIDELINES.md)** - ABEさんの信念に基づく実装原則
+- **[データベース関係修正](docs/DATABASE_RELATIONSHIP_FIX.md)** - Supabase外部キー制約問題の詳細解決記録
 
 ## What technologies are used for this project?
 

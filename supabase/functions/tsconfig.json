@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "types": ["./deno.d.ts"]
+  },
+  "include": [
+    "**/*.ts",
+    "deno.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+} 

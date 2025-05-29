@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,20 +16,22 @@ const Auth = () => {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
 
-  // ログイン済みの場合はダッシュボードにリダイレクト
+  // ログイン済みの場合はダッシュボードにリダイレクト（認証状態確定後のみ）
   useEffect(() => {
-    if (user) {
+    if (!loading && user) {
       navigate("/dashboard");
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+
+    console.log("Attempting to sign in with:", email, password);
 
     const { error } = await signIn(email, password);
     

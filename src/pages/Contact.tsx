@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,20 +30,43 @@ const Contact = () => {
         return;
       }
 
-      // 実際の送信処理はSupabase設定後に実装
-      console.log("Contact form submitted:", { name, email, subject, message });
-      
-      toast({
-        title: "お問い合わせを受け付けました",
-        description: "確認次第、お返事いたします。",
+      // 管理者へのお問い合わせメール送信
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-general-contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          senderName: name,
+          senderEmail: email,
+          subject: subject,
+          message: message,
+        }),
       });
 
-      // フォームをリセット
-      setName("");
-      setEmail("");
-      setSubject("");
-      setMessage("");
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: "お問い合わせを受け付けました",
+          description: result.message || "確認次第、お返事いたします。",
+        });
+
+        // フォームをリセット
+        setName("");
+        setEmail("");
+        setSubject("");
+        setMessage("");
+      } else {
+        toast({
+          title: "エラーが発生しました",
+          description: result.message || "しばらく時間をおいて再度お試しください。",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
+      console.error('お問い合わせ送信エラー:', error);
       toast({
         title: "エラーが発生しました",
         description: "しばらく時間をおいて再度お試しください。",

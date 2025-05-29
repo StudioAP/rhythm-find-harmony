@@ -1,54 +1,30 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { 
+  ClassroomWithSubscriptions, 
+  ClassroomFilters,
+  UseClassroomsReturn,
+  shouldShowClassroom,
+  SUBSCRIPTION_ERROR_MESSAGES,
+  SubscriptionStatus
+} from '@/types/classroom';
 
-export interface Classroom {
-  id: string;
-  name: string;
-  description: string;
-  area: string;
-  address: string;
-  phone: string;
-  email: string;
-  website_url: string;
-  image_url: string;
-  lesson_types: string[];
-  age_range: string;
-  monthly_fee_min: number;
-  monthly_fee_max: number;
-  trial_lesson_available: boolean;
-  parking_available: boolean;
-  published: boolean;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export const useClassrooms = () => {
-  const [classrooms, setClassrooms] = useState<Classroom[]>([]);
+export const useClassrooms = (): UseClassroomsReturn => {
+  const [classrooms, setClassrooms] = useState<ClassroomWithSubscriptions[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPublishedClassrooms = async (filters?: {
-    area?: string;
-    keyword?: string;
-    ageGroups?: string[];
-    features?: string[];
-  }) => {
+  const fetchPublishedClassrooms = async (filters?: ClassroomFilters) => {
     try {
       setLoading(true);
       setError(null);
       
+      // 本番仕様：確実なクエリで教室データを取得
       let query = supabase
         .from('classrooms')
-        .select(`
-          *,
-          subscriptions!inner(status, current_period_end)
-        `)
-        .eq('published', true)
-        .eq('subscriptions.status', 'active')
-        .gte('subscriptions.current_period_end', new Date().toISOString());
+        .select('*')
+        .eq('published', true);
 
       // エリアフィルター
       if (filters?.area && filters.area !== '') {
@@ -64,13 +40,33 @@ export const useClassrooms = () => {
 
       if (error) {
         console.error('教室検索エラー:', error);
-        throw new Error('教室情報の取得に失敗しました');
+        throw new Error(SUBSCRIPTION_ERROR_MESSAGES.GENERAL_ERROR);
       }
 
-      // フロントエンドでの追加フィルタリング
-      let filteredData = data || [];
+      // 型安全な変換
+      const classroomsData = (data || []);
+      
+      // 本番仕様：各教室のサブスクリプション情報を個別取得して結合
+      const classroomsWithSubscriptions: ClassroomWithSubscriptions[] = await Promise.all(
+        classroomsData.map(async (classroom) => {
+          // 教室所有者のサブスクリプション情報を取得
+          const { data: subscriptionsData } = await supabase
+            .from('subscriptions')
+            .select('status, current_period_end')
+            .eq('user_id', classroom.user_id);
+          
+          return {
+            ...classroom,
+            subscriptions: (subscriptionsData as SubscriptionStatus[]) || null
+          };
+        })
+      );
+
+      // 本番ビジネスロジック適用（妥協なし）
+      const validClassrooms = classroomsWithSubscriptions.filter(shouldShowClassroom);
 
       // 年齢グループフィルター
+      let filteredData = validClassrooms;
       if (filters?.ageGroups && filters.ageGroups.length > 0) {
         filteredData = filteredData.filter(classroom => {
           return filters.ageGroups?.some(ageGroup => {
@@ -139,26 +135,34 @@ export const useClassrooms = () => {
     }
   };
 
-  const getClassroomById = async (id: string): Promise<Classroom | null> => {
+  const getClassroomById = useCallback(async (id: string): Promise<ClassroomWithSubscriptions | null> => {
     try {
       const { data, error } = await supabase
         .from('classrooms')
-        .select(`
-          *,
-          subscriptions!inner(status, current_period_end)
-        `)
+        .select('*')
         .eq('id', id)
         .eq('published', true)
-        .eq('subscriptions.status', 'active')
-        .gte('subscriptions.current_period_end', new Date().toISOString())
         .maybeSingle();
 
       if (error) {
         console.error('教室詳細取得エラー:', error);
-        throw new Error('教室詳細の取得に失敗しました');
+        throw new Error(SUBSCRIPTION_ERROR_MESSAGES.GENERAL_ERROR);
       }
       
-      return data;
+      if (!data) return null;
+      
+      // 教室所有者のサブスクリプション情報を取得
+      const { data: subscriptionsData } = await supabase
+        .from('subscriptions')
+        .select('status, current_period_end')
+        .eq('user_id', data.user_id);
+      
+      const typedClassroom: ClassroomWithSubscriptions = {
+        ...data,
+        subscriptions: (subscriptionsData as SubscriptionStatus[]) || null
+      };
+      
+      return typedClassroom;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '教室詳細の取得に失敗しました';
       console.error('教室詳細取得エラー:', error);
@@ -171,7 +175,58 @@ export const useClassrooms = () => {
       
       return null;
     }
-  };
+  }, [supabase, toast]);
+
+  const getClassroomByIdForPreview = useCallback(async (id: string, currentUserId?: string): Promise<ClassroomWithSubscriptions | null> => {
+    try {
+      // プレビューは必ずログイン済み所有者による確認
+      if (!currentUserId) {
+        console.error('プレビューはログイン必須です');
+        return null;
+      }
+
+      const { data, error } = await supabase
+        .from('classrooms')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', currentUserId) // 所有者の教室のみ取得
+        .maybeSingle();
+
+      if (error) {
+        console.error('プレビュー教室詳細取得エラー:', error);
+        throw new Error(SUBSCRIPTION_ERROR_MESSAGES.GENERAL_ERROR);
+      }
+      
+      if (!data) {
+        console.log('所有者の教室が見つかりません:', { id, currentUserId });
+        return null;
+      }
+      
+      // 教室所有者のサブスクリプション情報を取得
+      const { data: subscriptionsData } = await supabase
+        .from('subscriptions')
+        .select('status, current_period_end')
+        .eq('user_id', data.user_id);
+      
+      const typedClassroom: ClassroomWithSubscriptions = {
+        ...data,
+        subscriptions: (subscriptionsData as SubscriptionStatus[]) || null
+      };
+      
+      return typedClassroom;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'プレビュー教室詳細の取得に失敗しました';
+      console.error('プレビュー教室詳細取得エラー:', error);
+      
+      toast({
+        title: "エラー",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
+      return null;
+    }
+  }, []);
 
   return {
     classrooms,
@@ -179,5 +234,6 @@ export const useClassrooms = () => {
     error,
     fetchPublishedClassrooms,
     getClassroomById,
+    getClassroomByIdForPreview,
   };
 };

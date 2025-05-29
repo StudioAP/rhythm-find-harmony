@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "lsof -t -i:3000 | xargs -r kill -9 && vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
