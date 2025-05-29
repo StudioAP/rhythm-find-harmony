@@ -19,11 +19,12 @@ const prefectures = [
 ];
 
 const ageGroups = [
-  { id: "toddler", label: "未就学児" },
+  { id: "toddler", label: "幼児（0-6歳）" },
   { id: "elementary", label: "小学生" },
-  { id: "junior", label: "中学生" },
-  { id: "high", label: "高校生" },
-  { id: "adult", label: "大人" }
+  { id: "junior_high", label: "中学生" },
+  { id: "high_school", label: "高校生" },
+  { id: "adult", label: "大人" },
+  { id: "senior", label: "シニア" }
 ];
 
 const features = [
@@ -32,8 +33,7 @@ const features = [
   { id: "online", label: "オンラインレッスン" },
   { id: "recital", label: "発表会あり" },
   { id: "group", label: "グループレッスン" },
-  { id: "individual", label: "個人レッスン" },
-  { id: "eurythmics", label: "リトミック" }
+  { id: "individual", label: "個人レッスン" }
 ];
 
 // レッスンタイプの日本語変換

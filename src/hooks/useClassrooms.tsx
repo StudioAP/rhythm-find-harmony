@@ -73,15 +73,17 @@ export const useClassrooms = (): UseClassroomsReturn => {
             const ageRange = classroom.age_range?.toLowerCase() || '';
             switch (ageGroup) {
               case 'toddler':
-                return ageRange.includes('未就学') || ageRange.includes('幼児');
+                return ageRange.includes('幼児') || ageRange.includes('toddler');
               case 'elementary':
-                return ageRange.includes('小学') || ageRange.includes('子供');
-              case 'junior':
-                return ageRange.includes('中学');
-              case 'high':
-                return ageRange.includes('高校');
+                return ageRange.includes('小学') || ageRange.includes('elementary');
+              case 'junior_high':
+                return ageRange.includes('中学') || ageRange.includes('junior_high');
+              case 'high_school':
+                return ageRange.includes('高校') || ageRange.includes('high_school');
               case 'adult':
-                return ageRange.includes('大人') || ageRange.includes('成人');
+                return ageRange.includes('大人') || ageRange.includes('adult');
+              case 'senior':
+                return ageRange.includes('シニア') || ageRange.includes('senior');
               default:
                 return false;
             }
@@ -109,8 +111,6 @@ export const useClassrooms = (): UseClassroomsReturn => {
                 return description.includes('グループ') || description.includes('集団');
               case 'individual':
                 return description.includes('個人') || description.includes('マンツーマン');
-              case 'eurythmics':
-                return lessonTypes.includes('リトミック') || description.includes('リトミック');
               default:
                 return false;
             }
