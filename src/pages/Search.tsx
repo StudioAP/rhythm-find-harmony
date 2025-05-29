@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Search as SearchIcon, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useClassrooms } from "@/hooks/useClassrooms";
-import { AGE_GROUPS, FEATURES, translateLessonType } from "@/constants/classroomData";
+import { AGE_GROUPS, FEATURES, LESSON_TYPES, translateLessonType } from "@/constants/classroomData";
 
 const prefectures = [
   "", "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
@@ -22,9 +22,16 @@ const prefectures = [
 const Search = () => {
   const [keyword, setKeyword] = useState("");
   const [selectedPrefecture, setSelectedPrefecture] = useState("");
+  const [selectedLessonTypes, setSelectedLessonTypes] = useState<string[]>([]);
   const [selectedAges, setSelectedAges] = useState<string[]>([]);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const { classrooms, loading, fetchPublishedClassrooms } = useClassrooms();
+  
+  const toggleLessonType = (id: string) => {
+    setSelectedLessonTypes(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
   
   const toggleAge = (id: string) => {
     setSelectedAges(prev => 
@@ -42,6 +49,7 @@ const Search = () => {
     fetchPublishedClassrooms({
       area: selectedPrefecture,
       keyword,
+      lessonTypes: selectedLessonTypes,
       ageGroups: selectedAges,
       features: selectedFeatures,
     });
@@ -106,6 +114,25 @@ const Search = () => {
 
           {/* フィルター */}
           <div className="space-y-4">
+            {/* レッスンタイプ */}
+            <div>
+              <h3 className="font-semibold text-gray-700 mb-2">レッスンの種類</h3>
+              <div className="flex flex-wrap gap-x-6 gap-y-2">
+                {LESSON_TYPES.map(lessonType => (
+                  <div key={lessonType.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`lesson-${lessonType.id}`}
+                      checked={selectedLessonTypes.includes(lessonType.id)}
+                      onCheckedChange={() => toggleLessonType(lessonType.id)}
+                    />
+                    <Label htmlFor={`lesson-${lessonType.id}`} className="text-sm font-medium cursor-pointer">
+                      {lessonType.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
             {/* 対象年齢 */}
             <div>
               <h3 className="font-semibold text-gray-700 mb-2">対象年齢</h3>

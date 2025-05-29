@@ -113,6 +113,7 @@ export const SUBSCRIPTION_ERROR_MESSAGES = {
 export interface ClassroomFilters {
   area?: string;
   keyword?: string;
+  lessonTypes?: string[];
   ageGroups?: string[];
   features?: string[];
 }

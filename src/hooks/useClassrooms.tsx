@@ -65,8 +65,18 @@ export const useClassrooms = (): UseClassroomsReturn => {
       // 本番ビジネスロジック適用（妥協なし）
       const validClassrooms = classroomsWithSubscriptions.filter(shouldShowClassroom);
 
-      // 年齢グループフィルター
+      // レッスンタイプフィルター
       let filteredData = validClassrooms;
+      if (filters?.lessonTypes && filters.lessonTypes.length > 0) {
+        filteredData = filteredData.filter(classroom => {
+          const lessonTypes = classroom.lesson_types || [];
+          return filters.lessonTypes?.some(lessonType => 
+            lessonTypes.includes(lessonType)
+          );
+        });
+      }
+
+      // 年齢グループフィルター
       if (filters?.ageGroups && filters.ageGroups.length > 0) {
         filteredData = filteredData.filter(classroom => {
           return filters.ageGroups?.some(ageGroup => {
