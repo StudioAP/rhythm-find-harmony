@@ -20,6 +20,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { AGE_GROUPS, LESSON_TYPES, WEEKDAYS } from "@/constants/classroomData";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -53,36 +54,6 @@ const prefectures = [
   "奈良県", "和歌山県", "鳥取県", "島根県", "岡山県", "広島県", "山口県",
   "徳島県", "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県",
   "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
-];
-
-// 曜日一覧
-const weekdays = [
-  { id: "monday", label: "月曜日" },
-  { id: "tuesday", label: "火曜日" },
-  { id: "wednesday", label: "水曜日" },
-  { id: "thursday", label: "木曜日" },
-  { id: "friday", label: "金曜日" },
-  { id: "saturday", label: "土曜日" },
-  { id: "sunday", label: "日曜日" }
-];
-
-// 対象年齢
-const targetAges = [
-  { id: "toddler", label: "幼児（0-6歳）" },
-  { id: "elementary", label: "小学生" },
-  { id: "junior_high", label: "中学生" },
-  { id: "high_school", label: "高校生" },
-  { id: "adult", label: "大人" },
-  { id: "senior", label: "シニア" }
-];
-
-// レッスンタイプ
-const lessonTypes = [
-  { id: "piano", label: "ピアノ" },
-  { id: "eurythmics", label: "リトミック" },
-  { id: "solfege", label: "ソルフェージュ" },
-  { id: "ensemble", label: "アンサンブル" },
-  { id: "composition", label: "作曲" }
 ];
 
 // フォームのバリデーションスキーマ
@@ -848,7 +819,7 @@ const ClassroomRegistration = () => {
                   <FormItem>
                     <FormLabel>レッスンの種類 *</FormLabel>
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {lessonTypes.map((type) => (
+                      {LESSON_TYPES.map((type) => (
                         <FormField
                           key={type.id}
                           control={form.control}
@@ -894,7 +865,7 @@ const ClassroomRegistration = () => {
                   <FormItem>
                     <FormLabel>対象年齢 *</FormLabel>
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {targetAges.map((age) => (
+                      {AGE_GROUPS.map((age) => (
                         <FormField
                           key={age.id}
                           control={form.control}
@@ -940,7 +911,7 @@ const ClassroomRegistration = () => {
                   <FormItem>
                     <FormLabel>レッスン可能曜日 *</FormLabel>
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {weekdays.map((day) => (
+                      {WEEKDAYS.map((day) => (
                         <FormField
                           key={day.id}
                           control={form.control}

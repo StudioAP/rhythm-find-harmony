@@ -10,45 +10,7 @@ import { toast } from "sonner";
 import { useClassrooms } from "@/hooks/useClassrooms";
 import { useAuth } from "@/hooks/useAuth";
 import { ClassroomWithSubscriptions } from "@/types/classroom";
-
-// 曜日の日本語変換
-const translateDay = (day: string) => {
-  const dayMap: { [key: string]: string } = {
-    'monday': '月曜日',
-    'tuesday': '火曜日', 
-    'wednesday': '水曜日',
-    'thursday': '木曜日',
-    'friday': '金曜日',
-    'saturday': '土曜日',
-    'sunday': '日曜日'
-  };
-  return dayMap[day] || day;
-};
-
-// レッスンタイプの日本語変換
-const translateLessonType = (type: string) => {
-  const typeMap: { [key: string]: string } = {
-    'piano': 'ピアノ',
-    'eurythmics': 'リトミック',
-    'solfege': 'ソルフェージュ',
-    'ensemble': 'アンサンブル',
-    'composition': '作曲'
-  };
-  return typeMap[type] || type;
-};
-
-// 対象年齢の日本語変換
-const translateAgeRange = (ageRange: string) => {
-  const ageMap: { [key: string]: string } = {
-    'toddler': '幼児（0-6歳）',
-    'elementary': '小学生',
-    'junior_high': '中学生',
-    'high_school': '高校生',
-    'adult': '大人',
-    'senior': 'シニア'
-  };
-  return ageRange.split(',').map(age => ageMap[age.trim()] || age.trim()).join(', ');
-};
+import { translateDay, translateLessonType, translateAgeRange } from "@/constants/classroomData";
 
 const ClassroomDetail = () => {
   const { id } = useParams<{ id: string }>();

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Search as SearchIcon, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useClassrooms } from "@/hooks/useClassrooms";
+import { AGE_GROUPS, FEATURES, translateLessonType } from "@/constants/classroomData";
 
 const prefectures = [
   "", "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
@@ -17,36 +18,6 @@ const prefectures = [
   "徳島県", "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県",
   "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
 ];
-
-const ageGroups = [
-  { id: "toddler", label: "幼児（0-6歳）" },
-  { id: "elementary", label: "小学生" },
-  { id: "junior_high", label: "中学生" },
-  { id: "high_school", label: "高校生" },
-  { id: "adult", label: "大人" },
-  { id: "senior", label: "シニア" }
-];
-
-const features = [
-  { id: "beginner", label: "初心者歓迎" },
-  { id: "advanced", label: "上級者向け" },
-  { id: "online", label: "オンラインレッスン" },
-  { id: "recital", label: "発表会あり" },
-  { id: "group", label: "グループレッスン" },
-  { id: "individual", label: "個人レッスン" }
-];
-
-// レッスンタイプの日本語変換
-const translateLessonType = (type: string) => {
-  const typeMap: { [key: string]: string } = {
-    'piano': 'ピアノ',
-    'eurythmics': 'リトミック',
-    'solfege': 'ソルフェージュ',
-    'ensemble': 'アンサンブル',
-    'composition': '作曲'
-  };
-  return typeMap[type] || type;
-};
 
 const Search = () => {
   const [keyword, setKeyword] = useState("");
@@ -139,7 +110,7 @@ const Search = () => {
             <div>
               <h3 className="font-semibold text-gray-700 mb-2">対象年齢</h3>
               <div className="flex flex-wrap gap-x-6 gap-y-2">
-                {ageGroups.map(age => (
+                {AGE_GROUPS.map(age => (
                   <div key={age.id} className="flex items-center space-x-2">
                     <Checkbox 
                       id={`age-${age.id}`}
@@ -158,7 +129,7 @@ const Search = () => {
             <div>
               <h3 className="font-semibold text-gray-700 mb-2">特徴</h3>
               <div className="flex flex-wrap gap-x-6 gap-y-2">
-                {features.map(feature => (
+                {FEATURES.map(feature => (
                   <div key={feature.id} className="flex items-center space-x-2">
                     <Checkbox 
                       id={`feature-${feature.id}`}
