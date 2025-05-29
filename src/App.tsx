@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import Search from "./pages/Search";
 import ClassroomDetail from "./pages/ClassroomDetail";
 import ClassroomRegistration from "./pages/ClassroomRegistration";
@@ -29,6 +29,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/search" element={<Search />} />
           <Route path="/classrooms/:id" element={<ClassroomDetail />} />
           <Route path="/classroom/register" element={<ClassroomRegistration />} />

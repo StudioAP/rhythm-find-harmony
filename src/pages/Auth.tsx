@@ -83,9 +83,10 @@ const Auth = () => {
     } else {
       toast({
         title: "新規登録成功",
-        description: "メールアドレスを確認してください（開発環境では確認不要）",
+        description: "確認メールを送信しました。メールをご確認ください。",
       });
-      navigate("/dashboard");
+      // メール確認が必要な場合は登録成功後にリダイレクトしない
+      // navigate("/dashboard");
     }
     
     setIsLoading(false);
