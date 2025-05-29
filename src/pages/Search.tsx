@@ -1,13 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Search as SearchIcon, MapPin, Clock, Users, Star, Phone } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useClassrooms } from "@/hooks/useClassrooms";
-import { AGE_GROUPS, FEATURES, LESSON_TYPES, WEEKDAYS, translateAgeGroup, translateLessonType, translateFeature, translateWeekday, LESSON_TYPES_MAP, AGE_GROUPS_MAP } from "@/constants/classroomData";
+import { AGE_GROUPS, FEATURES, LESSON_TYPES, WEEKDAYS, translateDay, translateLessonType, LESSON_TYPES_MAP, AGE_GROUPS_MAP } from "@/constants/classroomData";
 import Layout from "@/components/layout/Layout";
 import { Badge } from "@/components/ui/badge";
 
@@ -43,6 +43,7 @@ const translateWeekday = (day: string): string => {
 };
 
 const Search = () => {
+  const [searchParams] = useSearchParams();
   const [keyword, setKeyword] = useState("");
   const [selectedPrefecture, setSelectedPrefecture] = useState("");
   const [selectedLessonTypes, setSelectedLessonTypes] = useState<string[]>([]);
@@ -51,25 +52,80 @@ const Search = () => {
   const [selectedWeekdays, setSelectedWeekdays] = useState<string[]>([]);
   const [selectedTrialLesson, setSelectedTrialLesson] = useState<boolean | null>(null);
 
+  // URLパラメータから初期値を設定
+  useEffect(() => {
+    const typeParam = searchParams.get('type');
+    const keywordParam = searchParams.get('keyword');
+    const areaParam = searchParams.get('area');
+    const lessonParam = searchParams.get('lesson');
+
+    // キーワードパラメータがある場合は設定
+    if (keywordParam) {
+      setKeyword(keywordParam);
+    }
+
+    // エリアパラメータがある場合は設定
+    if (areaParam) {
+      setSelectedPrefecture(areaParam);
+    }
+
+    // レッスンタイプパラメータがある場合は設定
+    if (lessonParam) {
+      setSelectedLessonTypes([lessonParam]);
+    }
+
+    // typeパラメータに基づく初期設定
+    switch (typeParam) {
+      case 'area':
+        // エリア検索を強調（特別な処理は不要、UI上でエリア部分を強調可能）
+        break;
+      case 'age':
+        // 年齢検索を強調
+        break;
+      case 'feature':
+        // 特徴検索を強調
+        break;
+      case 'piano':
+        setSelectedLessonTypes(['piano']);
+        break;
+      case 'eurythmics':
+        setSelectedLessonTypes(['eurythmics']);
+        break;
+    }
+  }, [searchParams]);
+
   const filters = useMemo(() => ({
     prefecture: selectedPrefecture || undefined,
+    keyword: keyword.trim() !== '' ? keyword : undefined,
     lessonTypes: selectedLessonTypes.length > 0 ? selectedLessonTypes : undefined,
     ageGroups: selectedAgeGroups.length > 0 ? selectedAgeGroups : undefined,
     features: selectedFeatures.length > 0 ? selectedFeatures : undefined,
     weekdays: selectedWeekdays.length > 0 ? selectedWeekdays : undefined,
     trialLesson: selectedTrialLesson ?? undefined,
-  }), [selectedPrefecture, selectedLessonTypes, selectedAgeGroups, selectedFeatures, selectedWeekdays, selectedTrialLesson]);
+  }), [selectedPrefecture, keyword, selectedLessonTypes, selectedAgeGroups, selectedFeatures, selectedWeekdays, selectedTrialLesson]);
 
   const { classrooms, loading, fetchPublishedClassrooms } = useClassrooms();
 
   const handleSearch = () => {
     fetchPublishedClassrooms({
       area: selectedPrefecture,
+      keyword: keyword.trim() !== '' ? keyword : undefined,
       lessonTypes: selectedLessonTypes.length > 0 ? selectedLessonTypes : undefined,
       ageGroups: selectedAgeGroups.length > 0 ? selectedAgeGroups : undefined,
       features: selectedFeatures.length > 0 ? selectedFeatures : undefined,
     });
   };
+
+  // 初回読み込み時とURLパラメータ変更時に自動検索
+  useEffect(() => {
+    fetchPublishedClassrooms({
+      area: selectedPrefecture,
+      keyword: keyword.trim() !== '' ? keyword : undefined,
+      lessonTypes: selectedLessonTypes.length > 0 ? selectedLessonTypes : undefined,
+      ageGroups: selectedAgeGroups.length > 0 ? selectedAgeGroups : undefined,
+      features: selectedFeatures.length > 0 ? selectedFeatures : undefined,
+    });
+  }, [fetchPublishedClassrooms, selectedPrefecture, keyword, selectedLessonTypes, selectedAgeGroups, selectedFeatures]);
 
   return (
     <Layout title="ピアノ教室・リトミック教室を探す" className="bg-gray-50">
@@ -79,6 +135,28 @@ const Search = () => {
           <CardTitle>検索条件を選択してください</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* キーワード検索ボックス追加 */}
+          <div>
+            <h3 className="text-lg font-medium mb-3">キーワード検索</h3>
+            <div className="flex gap-2">
+              <Input
+                placeholder="教室名、エリア、特徴などで検索"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                className="flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch();
+                  }
+                }}
+              />
+              <Button onClick={handleSearch} size="default">
+                <SearchIcon className="h-4 w-4 mr-2" />
+                検索
+              </Button>
+            </div>
+          </div>
+
           {/* レッスンタイプ選択 */}
           <div>
             <h3 className="text-lg font-medium mb-3">レッスンタイプ</h3>
@@ -278,10 +356,10 @@ const Search = () => {
                     </div>
                   )}
                   
-                  {classroom.phone_number && (
+                  {classroom.phone && (
                     <div className="flex items-center text-sm text-gray-600">
                       <Phone className="h-4 w-4 mr-1" />
-                      {classroom.phone_number}
+                      {classroom.phone}
                     </div>
                   )}
                 </div>
