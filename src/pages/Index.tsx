@@ -1,28 +1,13 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Search } from "lucide-react";
 import { Link } from "react-router-dom";
+import Layout from "@/components/layout/Layout";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="bg-white shadow-sm py-4">
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary">Piano Search</h1>
-          <div className="space-x-2">
-            <Button variant="outline" asChild>
-              <Link to="/login">ログイン</Link>
-            </Button>
-            <Button asChild>
-              <Link to="/register">教室を掲載する</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <Layout showBreadcrumb={false} className="p-0">
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-blue-50 to-indigo-50 py-16">
         <div className="container mx-auto px-4 text-center">
@@ -106,26 +91,11 @@ const Index = () => {
             月額たった500円で、新しい生徒との出会いをサポートします
           </p>
           <Button size="lg" asChild>
-            <Link to="/register">教室情報を掲載する</Link>
+            <Link to="/classroom/register">教室情報を掲載する</Link>
           </Button>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-50 py-8 mt-auto">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-500">© 2025 Piano Search. All rights reserved.</p>
-            <div className="flex gap-6 mt-4 md:mt-0">
-              <Link to="/about" className="text-gray-500 hover:text-primary">About</Link>
-              <Link to="/terms" className="text-gray-500 hover:text-primary">利用規約</Link>
-              <Link to="/privacy" className="text-gray-500 hover:text-primary">プライバシーポリシー</Link>
-              <Link to="/contact" className="text-gray-500 hover:text-primary">お問い合わせ</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
+    </Layout>
   );
 };
 

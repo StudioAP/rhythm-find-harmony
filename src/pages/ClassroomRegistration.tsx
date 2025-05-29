@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AGE_GROUPS, LESSON_TYPES, WEEKDAYS } from "@/constants/classroomData";
+import Layout from "@/components/layout/Layout";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -537,12 +538,14 @@ const ClassroomRegistration = () => {
   // ローディング中の表示
   if (loading || authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">データを読み込み中...</p>
+      <Layout showBreadcrumb={false}>
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-4 text-gray-600">データを読み込み中...</p>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
@@ -552,502 +555,501 @@ const ClassroomRegistration = () => {
   }
 
   return (
-    <div className="container max-w-4xl py-10">
-      <div className="mb-10 text-center">
-        <h1 className="text-3xl font-bold mb-2">
-          {existingClassroom ? '教室情報編集' : '教室情報登録'}
-        </h1>
-        <p className="text-muted-foreground">
-          {existingClassroom 
-            ? '保存済みの教室情報を編集できます。' 
-            : 'あなたの教室情報を登録して、生徒さんとの出会いを広げましょう。'
-          }
-          {!existingClassroom && '登録後、月額500円のお支払いで情報が公開されます。'}
-        </p>
-        {existingClassroom && (
-          <p className="text-sm text-blue-600 mt-2">
-            💡 下書きが保存されています。公開するには管理画面で決済を完了してください。
-        </p>
-        )}
-      </div>
+    <Layout title={existingClassroom ? '教室情報編集' : '教室情報登録'}>
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-10 text-center">
+          <p className="text-muted-foreground">
+            {existingClassroom 
+              ? '保存済みの教室情報を編集できます。' 
+              : 'あなたの教室情報を登録して、生徒さんとの出会いを広げましょう。'
+            }
+            {!existingClassroom && '登録後、月額500円のお支払いで情報が公開されます。'}
+          </p>
+          {existingClassroom && (
+            <p className="text-sm text-blue-600 mt-2">
+              💡 下書きが保存されています。公開するには管理画面で決済を完了してください。
+          </p>
+          )}
+        </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* 基本情報セクション */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <School size={20} />
-                基本情報
-              </CardTitle>
-              <CardDescription>教室の基本的な情報を入力してください</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>教室名 *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例：〇〇ピアノ教室" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* 基本情報セクション */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <School size={20} />
+                  基本情報
+                </CardTitle>
+                <CardDescription>教室の基本的な情報を入力してください</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>教室名 *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="例：〇〇ピアノ教室" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>教室の説明 *</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="教室の特徴や雰囲気、指導方針などを記入してください" 
-                        {...field} 
-                        className="min-h-[120px]"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="space-y-4">
-                <div>
-                  <FormLabel>写真アップロード</FormLabel>
-                  <div className="mt-2">
-                    <div className="flex items-center justify-center w-full">
-                      <label
-                        htmlFor="image-upload"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
-                      >
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <ImageUp className="w-8 h-8 mb-2 text-gray-500" />
-                          <p className="mb-2 text-sm text-gray-500">
-                            クリックまたはドラッグで画像をアップロード
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            PNG, JPG (最大5MB)
-                          </p>
-                        </div>
-                        <input
-                          id="image-upload"
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="hidden"
-                          onChange={handleImageUpload}
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>教室の説明 *</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="教室の特徴や雰囲気、指導方針などを記入してください" 
+                          {...field} 
+                          className="min-h-[120px]"
                         />
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {getAllImages().length > 0 && (
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium mb-2">登録画像（{getAllImages().length}枚）</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {getAllImages().map((_, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={getImageUrl(index)}
-                            alt={`教室画像 ${index + 1}`}
-                            className="h-24 w-full object-cover rounded-md"
+                    <FormLabel>写真アップロード</FormLabel>
+                    <div className="mt-2">
+                      <div className="flex items-center justify-center w-full">
+                        <label
+                          htmlFor="image-upload"
+                          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                        >
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <ImageUp className="w-8 h-8 mb-2 text-gray-500" />
+                            <p className="mb-2 text-sm text-gray-500">
+                              クリックまたはドラッグで画像をアップロード
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              PNG, JPG (最大5MB)
+                            </p>
+                          </div>
+                          <input
+                            id="image-upload"
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={handleImageUpload}
                           />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveImage(index)}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            ✕
-                          </button>
-                          {/* サムネイル選択ボタン */}
-                          <button
-                            type="button"
-                            onClick={() => handleThumbnailSelect(index)}
-                            className={`absolute bottom-1 left-1 p-1 rounded-full transition-opacity ${index === thumbnailIndex ? 'bg-blue-500' : 'bg-gray-500/70'}`}
-                          >
-                            <Star className="h-4 w-4 text-white" />
-                          </button>
-                        </div>
-                      ))}
+                        </label>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* 所在地セクション */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin size={20} />
-                所在地
-              </CardTitle>
-              <CardDescription>教室の住所情報を入力してください</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="prefecture"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>都道府県 *</FormLabel>
-                    <FormControl>
-                      <select
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        {...field}
-                      >
-                        <option value="">選択してください</option>
-                        {prefectures.map((pref) => (
-                          <option key={pref} value={pref}>
-                            {pref}
-                          </option>
+                  {getAllImages().length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium mb-2">登録画像（{getAllImages().length}枚）</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {getAllImages().map((_, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={getImageUrl(index)}
+                              alt={`教室画像 ${index + 1}`}
+                              className="h-24 w-full object-cover rounded-md"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(index)}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              ✕
+                            </button>
+                            {/* サムネイル選択ボタン */}
+                            <button
+                              type="button"
+                              onClick={() => handleThumbnailSelect(index)}
+                              className={`absolute bottom-1 left-1 p-1 rounded-full transition-opacity ${index === thumbnailIndex ? 'bg-blue-500' : 'bg-gray-500/70'}`}
+                            >
+                              <Star className="h-4 w-4 text-white" />
+                            </button>
+                          </div>
                         ))}
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>市区町村 *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例：渋谷区" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>番地・建物名 *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例：1-2-3 〇〇ビル2F" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* 連絡先セクション */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Phone size={20} />
-                連絡先
-              </CardTitle>
-              <CardDescription>生徒さんが連絡できる方法を入力してください</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>電話番号</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例：03-1234-5678" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      公開したくない場合は空欄でも構いません
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>メールアドレス *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例：info@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="website_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ウェブサイト</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例：https://www.example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* レッスン情報セクション */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Info size={20} />
-                レッスン情報
-              </CardTitle>
-              <CardDescription>レッスンの詳細を入力してください</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <FormField
-                control={form.control}
-                name="lesson_types"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>レッスンの種類 *</FormLabel>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {LESSON_TYPES.map((type) => (
-                        <FormField
-                          key={type.id}
-                          control={form.control}
-                          name="lesson_types"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={type.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(type.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, type.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== type.id
-                                            )
-                                          );
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {type.label}
-                                </FormLabel>
-                              </FormItem>
-                            );
-                          }}
-                        />
-                      ))}
+                      </div>
                     </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-              <FormField
-                control={form.control}
-                name="target_ages"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>対象年齢 *</FormLabel>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {AGE_GROUPS.map((age) => (
-                        <FormField
-                          key={age.id}
-                          control={form.control}
-                          name="target_ages"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={age.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(age.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, age.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== age.id
-                                            )
-                                          );
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {age.label}
-                                </FormLabel>
-                              </FormItem>
-                            );
-                          }}
+            {/* 所在地セクション */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin size={20} />
+                  所在地
+                </CardTitle>
+                <CardDescription>教室の住所情報を入力してください</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="prefecture"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>都道府県 *</FormLabel>
+                      <FormControl>
+                        <select
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          {...field}
+                        >
+                          <option value="">選択してください</option>
+                          {prefectures.map((pref) => (
+                            <option key={pref} value={pref}>
+                              {pref}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>市区町村 *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="例：渋谷区" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>番地・建物名 *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="例：1-2-3 〇〇ビル2F" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* 連絡先セクション */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Phone size={20} />
+                  連絡先
+                </CardTitle>
+                <CardDescription>生徒さんが連絡できる方法を入力してください</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>電話番号</FormLabel>
+                      <FormControl>
+                        <Input placeholder="例：03-1234-5678" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        公開したくない場合は空欄でも構いません
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>メールアドレス *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="例：info@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="website_url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ウェブサイト</FormLabel>
+                      <FormControl>
+                        <Input placeholder="例：https://www.example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* レッスン情報セクション */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Info size={20} />
+                  レッスン情報
+                </CardTitle>
+                <CardDescription>レッスンの詳細を入力してください</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="lesson_types"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>レッスンの種類 *</FormLabel>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {LESSON_TYPES.map((type) => (
+                          <FormField
+                            key={type.id}
+                            control={form.control}
+                            name="lesson_types"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={type.id}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(type.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, type.id])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== type.id
+                                              )
+                                            );
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {type.label}
+                                  </FormLabel>
+                                </FormItem>
+                              );
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="target_ages"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>対象年齢 *</FormLabel>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {AGE_GROUPS.map((age) => (
+                          <FormField
+                            key={age.id}
+                            control={form.control}
+                            name="target_ages"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={age.id}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(age.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, age.id])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== age.id
+                                              )
+                                            );
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {age.label}
+                                  </FormLabel>
+                                </FormItem>
+                              );
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="available_days"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>レッスン可能曜日 *</FormLabel>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {WEEKDAYS.map((day) => (
+                          <FormField
+                            key={day.id}
+                            control={form.control}
+                            name="available_days"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={day.id}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(day.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, day.id])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== day.id
+                                              )
+                                            );
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {day.label}
+                                  </FormLabel>
+                                </FormItem>
+                              );
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="available_times"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>レッスン時間帯</FormLabel>
+                      <FormControl>
+                        <Input placeholder="例：平日10:00-18:00、土日10:00-15:00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="price_range"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>料金目安 *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="例：月謝8,000円〜12,000円、入会金5,000円" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* 追加情報セクション */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users size={20} />
+                  追加情報
+                </CardTitle>
+                <CardDescription>その他のPR情報を入力してください</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="instructor_info"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>講師紹介</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="講師の経歴や実績、指導方針などを記入してください" 
+                          {...field}
+                          className="min-h-[100px]"
                         />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="available_days"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>レッスン可能曜日 *</FormLabel>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {WEEKDAYS.map((day) => (
-                        <FormField
-                          key={day.id}
-                          control={form.control}
-                          name="available_days"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={day.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(day.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, day.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== day.id
-                                            )
-                                          );
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {day.label}
-                                </FormLabel>
-                              </FormItem>
-                            );
-                          }}
+                <FormField
+                  control={form.control}
+                  name="pr_points"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>PRポイント</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="教室の特長や強み、他教室との差別化ポイントなどを記入してください" 
+                          {...field}
+                          className="min-h-[100px]"
                         />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
 
-              <FormField
-                control={form.control}
-                name="available_times"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>レッスン時間帯</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例：平日10:00-18:00、土日10:00-15:00" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="price_range"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>料金目安 *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例：月謝8,000円〜12,000円、入会金5,000円" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* 追加情報セクション */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users size={20} />
-                追加情報
-              </CardTitle>
-              <CardDescription>その他のPR情報を入力してください</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="instructor_info"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>講師紹介</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="講師の経歴や実績、指導方針などを記入してください" 
-                        {...field}
-                        className="min-h-[100px]"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="pr_points"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>PRポイント</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="教室の特長や強み、他教室との差別化ポイントなどを記入してください" 
-                        {...field}
-                        className="min-h-[100px]"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* 送信ボタン */}
-          <div className="flex flex-col gap-4 items-center">
-            <Button type="submit" className="w-full max-w-md" disabled={isSubmitting}>
-              {isSubmitting ? "保存中..." : existingClassroom ? "変更を保存" : "下書きとして保存"}
-            </Button>
-            <div className="text-center space-y-2">
-            <p className="text-sm text-muted-foreground">
-                💡 無料で下書き保存できます。公開は管理画面から月額500円でスタート！
+            {/* 送信ボタン */}
+            <div className="flex flex-col gap-4 items-center">
+              <Button type="submit" className="w-full max-w-md" disabled={isSubmitting}>
+                {isSubmitting ? "保存中..." : existingClassroom ? "変更を保存" : "下書きとして保存"}
+              </Button>
+              <div className="text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
+                  💡 無料で下書き保存できます。公開は管理画面から月額500円でスタート！
+                </p>
+                <p className="text-xs text-gray-400">
+                  保存後はいつでも編集・修正が可能です
               </p>
-              <p className="text-xs text-gray-400">
-                保存後はいつでも編集・修正が可能です
-            </p>
+              </div>
+              <Link to="/dashboard" className="text-sm text-primary hover:underline">
+                管理画面へ戻る
+              </Link>
             </div>
-            <Link to="/dashboard" className="text-sm text-primary hover:underline">
-              管理画面へ戻る
-            </Link>
-          </div>
-        </form>
-      </Form>
-    </div>
+          </form>
+        </Form>
+      </div>
+    </Layout>
   );
 };
 

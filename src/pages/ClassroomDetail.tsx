@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, MapPin, Phone, Mail, Globe, Clock, Users, Star, Send } from "lucide-react";
-import { toast } from "sonner";
+import { ChevronLeft, ChevronRight, MapPin, Phone, Mail, Globe, Clock, Users, Star, Send, X, Check } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { useClassrooms } from "@/hooks/useClassrooms";
 import { useAuth } from "@/hooks/useAuth";
 import { ClassroomWithSubscriptions } from "@/types/classroom";
 import { translateDay, translateLessonType, translateAgeRange } from "@/constants/classroomData";
+import Layout from "@/components/layout/Layout";
 
 const ClassroomDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +30,17 @@ const ClassroomDetail = () => {
   const [loading, setLoading] = useState(true);
   const { getClassroomById, getClassroomByIdForPreview } = useClassrooms();
   const { user } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // パンくずリストのカスタム設定
+  const breadcrumbItems = [
+    { label: "ホーム", href: "/" },
+    { 
+      label: isPreview ? "管理ダッシュボード" : "教室を探す", 
+      href: isPreview ? "/dashboard" : "/search" 
+    },
+    { label: classroom?.name || "教室詳細" }
+  ];
 
   // 教室データの取得
   useEffect(() => {
@@ -44,7 +56,11 @@ const ClassroomDetail = () => {
         // プレビューモードでは所有者確認付きの関数を使用
         if (isPreview) {
           if (!user?.id) {
-            toast.error("プレビューにはログインが必要です");
+            toast({
+              title: "エラー",
+              description: "プレビューにはログインが必要です",
+              variant: "destructive"
+            });
             setClassroom(null);
             setLoading(false);
             return;
@@ -60,15 +76,27 @@ const ClassroomDetail = () => {
           console.log("[ClassroomDetail] classroom state after setClassroom:", data);
         } else {
           if (isPreview) {
-            toast.error("プレビューできません。教室が見つからないか、まだ公開されていません。");
+            toast({
+              title: "エラー",
+              description: "プレビューできません。教室が見つからないか、まだ公開されていません。",
+              variant: "destructive"
+            });
           } else {
-            toast.error("教室が見つかりませんでした");
+            toast({
+              title: "エラー",
+              description: "教室が見つかりませんでした",
+              variant: "destructive"
+            });
           }
           setClassroom(null);
         }
       } catch (error) {
         console.error("教室データ取得エラー:", error);
-        toast.error("教室情報の取得に失敗しました");
+        toast({
+          title: "エラー",
+          description: "教室情報の取得に失敗しました",
+          variant: "destructive"
+        });
         setClassroom(null);
       } finally {
         setLoading(false);
@@ -80,22 +108,24 @@ const ClassroomDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
+      <Layout showBreadcrumb={false}>
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
     );
   }
 
   if (!classroom) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">教室が見つかりません</h1>
-          <Link to="/search" className="text-primary hover:underline">
-            検索ページに戻る
-          </Link>
+      <Layout title="教室が見つかりません" breadcrumbItems={breadcrumbItems}>
+        <div className="text-center py-8">
+          <p className="text-gray-600 mb-4">お探しの教室が見つかりませんでした。</p>
+          <Button asChild>
+            <Link to="/search">教室を探す</Link>
+          </Button>
         </div>
-      </div>
+      </Layout>
     );
   }
   
@@ -150,7 +180,11 @@ const ClassroomDetail = () => {
     setSubmitting(true);
     
     if (!classroom.email) {
-      toast.error("この教室のメールアドレスが設定されていません。お電話でお問い合わせください。");
+      toast({
+        title: "エラー",
+        description: "この教室のメールアドレスが設定されていません。お電話でお問い合わせください。",
+        variant: "destructive"
+      });
       setSubmitting(false); // ここでフラグをリセット
       return;
     }
@@ -175,7 +209,10 @@ const ClassroomDetail = () => {
       const result = await response.json();
 
       if (result.success) {
-        toast.success(result.message);
+        toast({
+          title: "送信完了",
+          description: result.message,
+        });
         // フォームをリセット
         setContactForm({
           name: "",
@@ -184,60 +221,44 @@ const ClassroomDetail = () => {
           message: ""
         });
       } else {
-        toast.error(result.message);
+        toast({
+          title: "エラー",
+          description: result.message,
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('問い合わせ送信エラー:', error);
-      toast.error("メールの送信に失敗しました。しばらく時間をおいて再度お試しください。");
+      toast({
+        title: "エラー",
+        description: "メールの送信に失敗しました。しばらく時間をおいて再度お試しください。",
+        variant: "destructive"
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      {/* ヘッダー */}
-      <header className="bg-white shadow-sm py-4">
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <Link to="/" className="text-2xl font-bold text-primary">Piano Search</Link>
-          <div className="space-x-2">
-            <Button variant="outline" asChild>
-              <Link to="/login">ログイン</Link>
-            </Button>
-            <Button asChild>
-              <Link to="/classroom/register">教室を掲載する</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <Layout 
+      breadcrumbItems={breadcrumbItems}
+      className="bg-gray-50"
+    >
       {/* プレビューバナー */}
       {isPreview && (
-        <div className="bg-orange-100 border-b border-orange-200 py-3">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-center">
-              <div className="flex items-center space-x-2">
-                <Star className="h-5 w-5 text-orange-600" />
-                <span className="text-orange-800 font-medium">
-                  プレビューモード - 公開前の教室情報を確認しています
-                </span>
-              </div>
+        <div className="bg-orange-100 border border-orange-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-center">
+            <div className="flex items-center space-x-2">
+              <Star className="h-5 w-5 text-orange-600" />
+              <span className="text-orange-800 font-medium">
+                プレビューモード - 公開前の教室情報を確認しています
+              </span>
             </div>
           </div>
         </div>
       )}
 
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Link 
-            to={isPreview ? "/dashboard" : "/search"} 
-            className="text-primary hover:underline inline-flex items-center"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            {isPreview ? "管理画面に戻る" : "検索結果に戻る"}
-          </Link>
-        </div>
-
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
           <div className="p-6">
             <h1 className="text-3xl font-bold mb-2">{classroom.name || "教室名未設定"}</h1>
@@ -507,61 +528,64 @@ const ClassroomDetail = () => {
         )}
         
         {/* 問い合わせフォーム */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold mb-4">この教室に問い合わせる</h2>
-          <form onSubmit={handleContactSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">お名前 <span className="text-red-500">*</span></Label>
-                <Input
-                  id="name"
-                  name="name"
-                  required
-                  value={contactForm.name}
-                  onChange={handleContactChange}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">メールアドレス <span className="text-red-500">*</span></Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={contactForm.email}
-                  onChange={handleContactChange}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">電話番号（任意）</Label>
-              <Input
-                id="phone"
-                name="phone"
-                value={contactForm.phone}
-                onChange={handleContactChange}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="message">お問い合わせ内容 <span className="text-red-500">*</span></Label>
-              <Textarea
-                id="message"
-                name="message"
-                rows={5}
-                required
-                value={contactForm.message}
-                onChange={handleContactChange}
-                placeholder="レッスンの空き状況や料金について、体験レッスンの希望など詳しくお書きください。"
-              />
-            </div>
-            <Button type="submit" className="w-full md:w-auto" disabled={submitting}>送信する</Button>
-            <p className="text-xs text-gray-500 mt-2">
-              ※送信ボタンをクリックするとメーラー（メールアプリ）が起動し、教室運営者へ直接メールが送信されます。
-            </p>
-          </form>
-        </div>
+        {!isPreview && (
+          <Card className="mb-8">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold mb-4">お問い合わせ</h2>
+              <form onSubmit={handleContactSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">お名前 *</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      required
+                      value={contactForm.name}
+                      onChange={handleContactChange}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">メールアドレス *</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      value={contactForm.email}
+                      onChange={handleContactChange}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="phone">電話番号</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    value={contactForm.phone}
+                    onChange={handleContactChange}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="message">お問い合わせ内容 *</Label>
+                  <Textarea
+                    id="message"
+                    name="message"
+                    rows={5}
+                    required
+                    value={contactForm.message}
+                    onChange={handleContactChange}
+                    placeholder="レッスンの空き状況や料金について、体験レッスンの希望など詳しくお書きください。"
+                  />
+                </div>
+                <Button type="submit" disabled={submitting} className="w-full">
+                  {submitting ? "送信中..." : "お問い合わせを送信"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
       </div>
-    </div>
+    </Layout>
   );
 };
 

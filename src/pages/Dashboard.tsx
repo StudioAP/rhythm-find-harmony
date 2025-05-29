@@ -10,6 +10,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import Layout from "@/components/layout/Layout";
 
 interface Classroom {
   id: string;
@@ -189,12 +190,14 @@ const Dashboard = () => {
   // ローディング中
   if (loading || subscriptionLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+      <Layout showBreadcrumb={false}>
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-4 text-gray-600">読み込み中...</p>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
@@ -354,20 +357,19 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">教室管理ダッシュボード</h1>
+    <Layout title="教室管理ダッシュボード">
+      <div className="flex justify-end items-center mb-8">
         <div className="flex space-x-2">
           <Button variant="outline" className="flex items-center" asChild>
             <Link to="/">
               <Home className="mr-2 h-4 w-4" />
-              教室検索画面に戻る
+              ホームに戻る
             </Link>
           </Button>
-        <Button variant="outline" className="flex items-center" onClick={handleSignOut}>
-          <LogOut className="mr-2 h-4 w-4" />
-          ログアウト
-        </Button>
+          <Button variant="outline" className="flex items-center" onClick={handleSignOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            ログアウト
+          </Button>
         </div>
       </div>
 
@@ -402,145 +404,189 @@ const Dashboard = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xl">サポート</CardTitle>
+            <CardTitle className="text-xl">教室情報</CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
-            <p className="text-sm text-gray-500 mb-4">
-              問題やご質問がございましたらお気軽にお問い合わせください。
-            </p>
-            <Button variant="outline" className="w-full">
-              サポートセンターに問い合わせる
-            </Button>
+            {classroom ? (
+              <div>
+                <h3 className="font-semibold text-lg">{classroom.name}</h3>
+                <p className="text-sm text-gray-500">{classroom.area}</p>
+                <div className="flex space-x-2 mt-4">
+                  <Button variant="outline" size="sm" className="flex items-center" asChild>
+                    <Link to="/classroom/register">
+                      <Edit className="mr-2 h-4 w-4" />
+                      編集
+                    </Link>
+                  </Button>
+                  {classroom.published && (
+                    <Button variant="outline" size="sm" className="flex items-center" asChild>
+                      <Link to={`/classrooms/${classroom.id}`}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        確認
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500">
+                教室情報が未登録です
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-8">
-          <TabsTrigger value="classroom">教室情報</TabsTrigger>
-          <TabsTrigger value="settings">アカウント設定</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="classroom" className="flex items-center">
+            <Building className="mr-2 h-4 w-4" />
+            教室管理
+          </TabsTrigger>
+          <TabsTrigger value="subscription" className="flex items-center">
+            <CreditCard className="mr-2 h-4 w-4" />
+            決済管理
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="classroom">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Building className="mr-2 h-5 w-5" />
-                  教室詳細
-                </div>
-                <div className="flex space-x-2">
-                  {classroom && (
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/classrooms/${classroom.id}?preview=true`} target="_blank">
-                        <Eye className="mr-2 h-4 w-4" />
-                        プレビュー
+              <CardTitle>教室情報管理</CardTitle>
+              <CardDescription>
+                あなたの教室情報の管理や公開設定を行えます
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {classroom ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="font-semibold">教室名</h3>
+                      <p className="text-gray-600">{classroom.name}</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">エリア</h3>
+                      <p className="text-gray-600">{classroom.area}</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold">教室の説明</h3>
+                    <p className="text-gray-600 mt-1">{classroom.description}</p>
+                  </div>
+                  
+                  <div className="flex items-center space-x-4">
+                    <div>
+                      <span className="font-semibold">公開ステータス:</span>
+                      <span className="ml-2">{classroom.published ? '公開中' : '非公開'}</span>
+                    </div>
+                    {getStatusBadge()}
+                  </div>
+                  
+                  <div className="flex space-x-4">
+                    <Button className="flex items-center" asChild>
+                      <Link to="/classroom/register">
+                        <Edit className="mr-2 h-4 w-4" />
+                        教室情報を編集
                       </Link>
                     </Button>
-                  )}
-                  <Button size="sm" asChild>
+                    {classroom.published && (
+                      <Button variant="outline" className="flex items-center" asChild>
+                        <Link to={`/classrooms/${classroom.id}`} target="_blank">
+                          <Eye className="mr-2 h-4 w-4" />
+                          公開ページを確認
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Building className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">教室情報が未登録です</h3>
+                  <p className="text-gray-600 mb-6">まずは教室情報を登録しましょう（無料）</p>
+                  <Button className="flex items-center mx-auto" asChild>
                     <Link to="/classroom/register">
-                      <Edit className="mr-2 h-4 w-4" />
-                      {classroom ? '編集する' : '教室を登録する'}
+                      <Building className="mr-2 h-4 w-4" />
+                      教室情報を登録する
                     </Link>
                   </Button>
                 </div>
-              </CardTitle>
-              <CardDescription>
-                {classroom ? '登録されている教室情報を確認・編集できます' : '教室情報を登録してください'}
-              </CardDescription>
-            </CardHeader>
-            {classroom && (
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="col-span-1">
-                    <img 
-                      src={
-                        classroom.thumbnail_url ||
-                        (classroom.image_urls && classroom.image_urls[0]) ||
-                        "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
-                      }
-                      alt={classroom.name} 
-                      className="w-full h-48 object-cover rounded-md" 
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <h3 className="text-xl font-bold mb-2">{classroom.name}</h3>
-                    <p className="text-muted-foreground mb-2">{classroom.area}</p>
-                    <p className="mb-4">{classroom.description}</p>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      <span>最終更新日: {new Date(classroom.updated_at).toLocaleDateString('ja-JP')}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            )}
+              )}
+            </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="settings">
+        <TabsContent value="subscription">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Settings className="mr-2 h-5 w-5" />
-                アカウント設定
-              </CardTitle>
+              <CardTitle>決済・サブスクリプション管理</CardTitle>
               <CardDescription>
-                アカウント情報や決済設定を管理できます
+                決済状況の確認や支払い方法の変更を行えます
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h3 className="font-medium mb-2">基本情報</h3>
+            <CardContent>
+              <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm text-gray-500">メールアドレス</label>
-                    <div className="font-medium">{user.email}</div>
+                    <h3 className="font-semibold">契約状況</h3>
+                    <p className="text-gray-600">
+                      {subscription.hasActiveSubscription ? '有効' : '未契約'}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">月額料金</h3>
+                    <p className="text-gray-600">500円（税込）</p>
                   </div>
                 </div>
-              </div>
-
-              <div>
-                <h3 className="font-medium mb-2">決済設定</h3>
-                <div className="space-y-2">
+                
+                {subscription.subscriptionEndDate && (
+                  <div>
+                    <h3 className="font-semibold">次回更新日</h3>
+                    <p className="text-gray-600">
+                      {new Date(subscription.subscriptionEndDate).toLocaleDateString('ja-JP')}
+                    </p>
+                  </div>
+                )}
+                
+                <div className="flex space-x-4">
+                  {!subscription.hasActiveSubscription ? (
+                    <Button 
+                      className="flex items-center" 
+                      onClick={() => handleSubscription()}
+                      disabled={subscriptionLoading}
+                    >
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      サブスクリプションを開始
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      className="flex items-center" 
+                      onClick={openCustomerPortal}
+                      disabled={subscriptionLoading}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      決済設定を管理
+                    </Button>
+                  )}
                   <Button 
                     variant="outline" 
-                    className="flex items-center"
-                    onClick={openCustomerPortal}
-                    disabled={subscriptionLoading}
-                  >
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    決済情報を管理する
-                  </Button>
-                  <p className="text-sm text-gray-500">
-                    Stripeの決済管理画面で支払い方法の変更や履歴確認ができます
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-medium mb-2">サブスクリプション状態</h3>
-                <div className="space-y-2">
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center"
+                    className="flex items-center" 
                     onClick={refreshSubscriptionStatus}
                     disabled={refreshing}
                   >
                     <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                    状態を更新
+                    ステータスを更新
                   </Button>
-                  <p className="text-sm text-gray-500">
-                    決済後やプラン変更後に状態を手動で更新できます
-                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </Layout>
   );
 };
 

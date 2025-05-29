@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import Layout from "@/components/layout/Layout";
 
 const Auth = () => {
   // ログイン用の状態
@@ -93,7 +94,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
+    <Layout showHeader={false} showBreadcrumb={false} className="bg-gray-50 min-h-screen flex flex-col justify-center">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="text-center text-3xl font-bold text-gray-900 mb-8">
           Piano Search
@@ -203,8 +204,14 @@ const Auth = () => {
             </CardContent>
           </TabsContent>
         </Tabs>
+        
+        <CardFooter className="flex justify-center">
+          <Button variant="link" onClick={() => navigate("/")}>
+            トップページに戻る
+          </Button>
+        </CardFooter>
       </Card>
-    </div>
+    </Layout>
   );
 };
 
