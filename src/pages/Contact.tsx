@@ -49,16 +49,16 @@ const Contact = () => {
       const result = await response.json();
 
       if (result.success) {
-        toast({
-          title: "お問い合わせを受け付けました",
+      toast({
+        title: "お問い合わせを受け付けました",
           description: result.message || "確認次第、お返事いたします。",
-        });
+      });
 
-        // フォームをリセット
-        setName("");
-        setEmail("");
-        setSubject("");
-        setMessage("");
+      // フォームをリセット
+      setName("");
+      setEmail("");
+      setSubject("");
+      setMessage("");
       } else {
         toast({
           title: "エラーが発生しました",
@@ -81,101 +81,101 @@ const Contact = () => {
   return (
     <Layout title="お問い合わせ">
       <div className="max-w-2xl mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle>お問い合わせフォーム</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">お名前 *</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="山田太郎"
-                  required
-                />
-              </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>お問い合わせフォーム</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name">お名前 *</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="山田太郎"
+                    required
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">メールアドレス *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="example@email.com"
-                  required
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">メールアドレス *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="example@email.com"
+                    required
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="subject">件名 *</Label>
-                <Input
-                  id="subject"
-                  type="text"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="お問い合わせの件名"
-                  required
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="subject">件名 *</Label>
+                  <Input
+                    id="subject"
+                    type="text"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    placeholder="お問い合わせの件名"
+                    required
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="message">お問い合わせ内容 *</Label>
-                <Textarea
-                  id="message"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="お問い合わせ内容をご記入ください"
-                  rows={6}
-                  required
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="message">お問い合わせ内容 *</Label>
+                  <Textarea
+                    id="message"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="お問い合わせ内容をご記入ください"
+                    rows={6}
+                    required
+                  />
+                </div>
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "送信中..." : "お問い合わせを送信"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "送信中..." : "お問い合わせを送信"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>よくあるお問い合わせ</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-bold mb-2">教室の掲載について</h3>
-                <p className="text-gray-600 text-sm">
-                  教室の掲載をご希望の方は、<Link to="/classroom/register" className="text-primary underline">教室掲載ページ</Link>からお申し込みください。
-                </p>
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle>よくあるお問い合わせ</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-bold mb-2">教室の掲載について</h3>
+                  <p className="text-gray-600 text-sm">
+                    教室の掲載をご希望の方は、<Link to="/classroom/register" className="text-primary underline">教室掲載ページ</Link>からお申し込みください。
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-bold mb-2">料金について</h3>
+                  <p className="text-gray-600 text-sm">
+                    教室掲載の料金は月額500円（税込）です。詳細は利用規約をご確認ください。
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-bold mb-2">技術的なトラブル</h3>
+                  <p className="text-gray-600 text-sm">
+                    サイトの不具合や操作方法でご不明な点がございましたら、上記フォームよりお問い合わせください。
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold mb-2">料金について</h3>
-                <p className="text-gray-600 text-sm">
-                  教室掲載の料金は月額500円（税込）です。詳細は利用規約をご確認ください。
-                </p>
-              </div>
-              <div>
-                <h3 className="font-bold mb-2">技術的なトラブル</h3>
-                <p className="text-gray-600 text-sm">
-                  サイトの不具合や操作方法でご不明な点がございましたら、上記フォームよりお問い合わせください。
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <div className="text-center mt-8">
-          <Button variant="outline" asChild>
-            <Link to="/">トップページに戻る</Link>
-          </Button>
+          <div className="text-center mt-8">
+            <Button variant="outline" asChild>
+              <Link to="/">トップページに戻る</Link>
+            </Button>
+          </div>
         </div>
-      </div>
     </Layout>
   );
 };

@@ -192,11 +192,11 @@ const Dashboard = () => {
     return (
       <Layout showBreadcrumb={false}>
         <div className="flex items-center justify-center min-h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
-            <p className="mt-4 text-gray-600">読み込み中...</p>
-          </div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
         </div>
+      </div>
       </Layout>
     );
   }
@@ -366,10 +366,10 @@ const Dashboard = () => {
               ホームに戻る
             </Link>
           </Button>
-          <Button variant="outline" className="flex items-center" onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            ログアウト
-          </Button>
+        <Button variant="outline" className="flex items-center" onClick={handleSignOut}>
+          <LogOut className="mr-2 h-4 w-4" />
+          ログアウト
+        </Button>
         </div>
       </div>
 
@@ -424,7 +424,7 @@ const Dashboard = () => {
                         <Eye className="mr-2 h-4 w-4" />
                         確認
                       </Link>
-                    </Button>
+            </Button>
                   )}
                 </div>
               </div>
@@ -482,7 +482,7 @@ const Dashboard = () => {
                       <span className="ml-2">{classroom.published ? '公開中' : '非公開'}</span>
                     </div>
                     {getStatusBadge()}
-                  </div>
+                </div>
                   
                   <div className="flex space-x-4">
                     <Button className="flex items-center" asChild>
@@ -493,12 +493,12 @@ const Dashboard = () => {
                     </Button>
                     {classroom.published && (
                       <Button variant="outline" className="flex items-center" asChild>
-                        <Link to={`/classrooms/${classroom.id}`} target="_blank">
-                          <Eye className="mr-2 h-4 w-4" />
+                      <Link to={`/classrooms/${classroom.id}`} target="_blank">
+                        <Eye className="mr-2 h-4 w-4" />
                           公開ページを確認
-                        </Link>
-                      </Button>
-                    )}
+                      </Link>
+                    </Button>
+                  )}
                   </div>
                 </div>
               ) : (
@@ -514,7 +514,7 @@ const Dashboard = () => {
                   </Button>
                 </div>
               )}
-            </CardContent>
+              </CardContent>
           </Card>
         </TabsContent>
 
@@ -547,9 +547,9 @@ const Dashboard = () => {
                     <p className="text-gray-600">
                       {new Date(subscription.subscriptionEndDate).toLocaleDateString('ja-JP')}
                     </p>
-                  </div>
+              </div>
                 )}
-                
+
                 <div className="flex space-x-4">
                   {!subscription.hasActiveSubscription ? (
                     <Button 
@@ -561,19 +561,19 @@ const Dashboard = () => {
                       サブスクリプションを開始
                     </Button>
                   ) : (
-                    <Button 
-                      variant="outline" 
-                      className="flex items-center" 
-                      onClick={openCustomerPortal}
-                      disabled={subscriptionLoading}
-                    >
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center"
+                    onClick={openCustomerPortal}
+                    disabled={subscriptionLoading}
+                  >
                       <Settings className="mr-2 h-4 w-4" />
                       決済設定を管理
-                    </Button>
+                  </Button>
                   )}
                   <Button 
                     variant="outline" 
-                    className="flex items-center" 
+                    className="flex items-center"
                     onClick={refreshSubscriptionStatus}
                     disabled={refreshing}
                   >

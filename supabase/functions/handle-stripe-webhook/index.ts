@@ -3,29 +3,59 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+// 🔽 START EDIT
+// Stripe Secret Key と Webhook Secret の決定ロジックを一箇所に集約
+const stripeSecretKeyProd = Deno.env.get("STRIPE_SECRET_KEY_PROD");
+const stripeSecretKeyTest = Deno.env.get("STRIPE_SECRET_KEY_TEST");
+const stripeSecretKeyFallback = Deno.env.get("STRIPE_SECRET_KEY"); // 旧キー
+
+let stripeSecretKey: string | undefined;
+let determinedWebhookSecret: string | undefined;
+
+if (stripeSecretKeyProd && stripeSecretKeyProd.startsWith("sk_live_")) {
+  stripeSecretKey = stripeSecretKeyProd;
+  determinedWebhookSecret = Deno.env.get("STRIPE_WEBHOOK_SIGNING_SECRET_PROD");
+} else if (stripeSecretKeyTest && stripeSecretKeyTest.startsWith("sk_test_")) {
+  stripeSecretKey = stripeSecretKeyTest;
+  determinedWebhookSecret = Deno.env.get("STRIPE_WEBHOOK_SIGNING_SECRET_TEST");
+} else if (stripeSecretKeyFallback) { // フォールバック (sk_live_ or sk_test_ を想定)
+  stripeSecretKey = stripeSecretKeyFallback;
+  if (stripeSecretKeyFallback.startsWith("sk_live_")) {
+    determinedWebhookSecret = Deno.env.get("STRIPE_WEBHOOK_SIGNING_SECRET_PROD");
+  } else {
+    determinedWebhookSecret = Deno.env.get("STRIPE_WEBHOOK_SIGNING_SECRET_TEST");
+  }
+}
+
+const stripe = new Stripe(stripeSecretKey || "", {
   apiVersion: "2023-10-16",
 });
+// 🔼 END EDIT
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL") ?? "",
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  { auth: { persistSession: false } }
+);
 
 serve(async (req) => {
   try {
     console.log("Webhook received, processing...");
     
-    // 環境変数チェック（デバッグ用）
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+    // 🔽 START EDIT
+    const finalWebhookSecret = determinedWebhookSecret; // 上で決定したWebhook Secretを使用
+    // 🔼 END EDIT
+    
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
     console.log("Environment check:", {
+      // 🔽 START EDIT
       hasStripeKey: !!stripeSecretKey,
-      hasWebhookSecret: !!webhookSecret,
+      isLiveMode: stripeSecretKey?.startsWith("sk_live_"), // stripeSecretKeyから再判定
+      hasWebhookSecret: !!finalWebhookSecret,
+      webhookSecretSource: finalWebhookSecret === Deno.env.get("STRIPE_WEBHOOK_SIGNING_SECRET_PROD") ? "PROD" : (finalWebhookSecret === Deno.env.get("STRIPE_WEBHOOK_SIGNING_SECRET_TEST") ? "TEST" : "UNKNOWN/FALLBACK"),
+      // 🔼 END EDIT
       hasSupabaseUrl: !!supabaseUrl,
       hasServiceRole: !!serviceRoleKey
     });
@@ -37,7 +67,7 @@ serve(async (req) => {
       return new Response("Missing stripe-signature header", { status: 400 });
     }
 
-    if (!webhookSecret) {
+    if (!finalWebhookSecret) {
       console.error("Missing STRIPE_WEBHOOK_SECRET environment variable");
       return new Response("Missing webhook secret", { status: 500 });
     }
@@ -50,10 +80,14 @@ serve(async (req) => {
     let event: Stripe.Event;
     try {
       // ★ 修正3: Deno環境では非同期版を使用
+      if (!finalWebhookSecret) {
+        console.error("Webhook署名シークレットが環境変数に設定されていません。(STRIPE_WEBHOOK_SIGNING_SECRET_PROD or STRIPE_WEBHOOK_SIGNING_SECRET_TEST)");
+        return new Response("Webhook signing secret is not configured.", { status: 500 });
+      }
       event = await stripe.webhooks.constructEventAsync(
         rawBody,
         signature,
-        webhookSecret
+        finalWebhookSecret
       );
       console.log("Webhook signature verified successfully, event type:", event.type);
     } catch (err) {

@@ -15,7 +15,7 @@ export const useClassrooms = (): UseClassroomsReturn => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPublishedClassrooms = async (filters?: ClassroomFilters) => {
+  const fetchPublishedClassrooms = useCallback(async (filters?: ClassroomFilters) => {
     try {
       setLoading(true);
       setError(null);
@@ -143,7 +143,7 @@ export const useClassrooms = (): UseClassroomsReturn => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const getClassroomById = useCallback(async (id: string): Promise<ClassroomWithSubscriptions | null> => {
     try {

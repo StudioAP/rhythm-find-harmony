@@ -27,8 +27,25 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("ユーザーが認証されていません");
 
-    // シンプルな月額500円プランのみ
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    // 🔽 START EDIT
+    const stripeSecretKeyProd = Deno.env.get("STRIPE_SECRET_KEY_PROD");
+    const stripeSecretKeyTest = Deno.env.get("STRIPE_SECRET_KEY_TEST");
+
+    let stripeSecretKey: string | undefined;
+    if (stripeSecretKeyProd && stripeSecretKeyProd.startsWith("sk_live_")) {
+      stripeSecretKey = stripeSecretKeyProd;
+    } else if (stripeSecretKeyTest && stripeSecretKeyTest.startsWith("sk_test_")) {
+      stripeSecretKey = stripeSecretKeyTest;
+    } else {
+      stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY"); // フォールバック
+    }
+
+    if (!stripeSecretKey) {
+      throw new Error("Stripeのシークレットキーが設定されていません。");
+    }
+
+    const stripe = new Stripe(stripeSecretKey, {
+    // 🔼 END EDIT
       apiVersion: "2023-10-16",
     });
 

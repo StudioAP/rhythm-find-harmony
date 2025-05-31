@@ -68,6 +68,7 @@ alwaysApply: true
    - 実装した機能に重複がないことを最終確認してください。
 
    [IMPLEMENTATION_QUALITY_RULES.md](mdc:rhythm-find-harmony/IMPLEMENTATION_QUALITY_RULES.md)　を必ず参照してください。
+   開発サーバのポートは常に3000とし、再起動を要する場合は3000を切って、3000を起動する
 
 ---
 

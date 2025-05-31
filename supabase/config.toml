@@ -312,3 +312,25 @@ verify_jwt = false   # JWT認証を無効にして匿名アクセスを許可
 
 [functions.customer-portal]
 verify_jwt = true    # 認証を有効に戻す
+
+[functions.ping]
+enabled = true
+verify_jwt = true
+import_map = "./functions/ping/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/ping/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/ping/*.html" ]
+
+[functions.env-check]
+enabled = true
+verify_jwt = true
+import_map = "./functions/env-check/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/env-check/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/env-check/*.html" ]

@@ -6,8 +6,17 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  // E2Eテスト用認証スキップフラグ
+  const isE2E = typeof window !== 'undefined' && localStorage.getItem('e2eAuth') === '1';
 
   useEffect(() => {
+    if (isE2E) {
+      // E2Eテストでは疑似ユーザーで認証済みとみなす
+      setUser({ id: 'user-id', email: 'teacher@example.com' } as User);
+      setSession({ access_token: 'token', refresh_token: 'token', user: { id: 'user-id', email: 'teacher@example.com' } } as Session);
+      setLoading(false);
+      return;
+    }
     // 認証状態の変更を監視
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -25,9 +34,10 @@ export const useAuth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isE2E]);
 
   const signIn = async (email: string, password: string) => {
+    if (isE2E) return { data: null, error: null };
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -36,6 +46,7 @@ export const useAuth = () => {
   };
 
   const signUp = async (email: string, password: string, name: string) => {
+    if (isE2E) return { data: null, error: null };
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -50,6 +61,10 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
+    if (isE2E) {
+      setUser(null);
+      return { error: null };
+    }
     const { error } = await supabase.auth.signOut();
     return { error };
   };

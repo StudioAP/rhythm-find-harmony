@@ -45,8 +45,8 @@ const Index = () => {
                 onKeyDown={handleKeyDown}
               />
               <Button size="lg" className="h-12" onClick={handleSearch}>
-                <Search className="mr-2" />
-                検索
+                  <Search className="mr-2" />
+                  検索
               </Button>
             </div>
           </div>

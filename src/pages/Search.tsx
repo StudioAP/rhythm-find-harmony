@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Search as SearchIcon, MapPin, Clock, Users, Star, Phone } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useClassrooms } from "@/hooks/useClassrooms";
-import { AGE_GROUPS, FEATURES, LESSON_TYPES, WEEKDAYS, translateDay, translateLessonType, LESSON_TYPES_MAP, AGE_GROUPS_MAP } from "@/constants/classroomData";
+import { AGE_GROUPS, FEATURES, LESSON_TYPES, WEEKDAYS, translateDay, translateLessonType, LESSON_TYPES_MAP, AGE_GROUPS_MAP, translateAgeRange } from "@/constants/classroomData";
 import Layout from "@/components/layout/Layout";
 import { Badge } from "@/components/ui/badge";
 
@@ -125,7 +125,7 @@ const Search = () => {
       ageGroups: selectedAgeGroups.length > 0 ? selectedAgeGroups : undefined,
       features: selectedFeatures.length > 0 ? selectedFeatures : undefined,
     });
-  }, [fetchPublishedClassrooms, selectedPrefecture, keyword, selectedLessonTypes, selectedAgeGroups, selectedFeatures]);
+  }, [selectedPrefecture, keyword, selectedLessonTypes, selectedAgeGroups, selectedFeatures]);
 
   return (
     <Layout title="ピアノ教室・リトミック教室を探す" className="bg-gray-50">
@@ -153,9 +153,9 @@ const Search = () => {
               <Button onClick={handleSearch} size="default">
                 <SearchIcon className="h-4 w-4 mr-2" />
                 検索
-              </Button>
-            </div>
+            </Button>
           </div>
+        </div>
 
           {/* レッスンタイプ選択 */}
           <div>
@@ -184,11 +184,11 @@ const Search = () => {
           {/* 都道府県選択 */}
           <div>
             <h3 className="text-lg font-medium mb-3">都道府県</h3>
-            <select 
-              value={selectedPrefecture}
-              onChange={(e) => setSelectedPrefecture(e.target.value)}
+              <select 
+                value={selectedPrefecture}
+                onChange={(e) => setSelectedPrefecture(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-            >
+              >
               <option value="">すべての都道府県</option>
               <option value="東京都">東京都</option>
               <option value="神奈川県">神奈川県</option>
@@ -200,8 +200,8 @@ const Search = () => {
               <option value="北海道">北海道</option>
               <option value="宮城県">宮城県</option>
               <option value="広島県">広島県</option>
-            </select>
-          </div>
+              </select>
+            </div>
 
           {/* 対象年齢選択 */}
           <div>
@@ -228,7 +228,7 @@ const Search = () => {
           </div>
 
           {/* 特徴選択 */}
-          <div>
+            <div>
             <h3 className="text-lg font-medium mb-3">教室の特徴</h3>
             <div className="flex flex-wrap gap-2">
               {FEATURES.map(feature => (
@@ -247,12 +247,12 @@ const Search = () => {
                 >
                   {translateFeature(feature.id)}
                 </Button>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-
+            
           {/* 開講曜日選択 */}
-          <div>
+            <div>
             <h3 className="text-lg font-medium mb-3">開講曜日</h3>
             <div className="flex flex-wrap gap-2">
               {WEEKDAYS.map(day => (
@@ -271,8 +271,8 @@ const Search = () => {
                 >
                   {translateWeekday(day.id)}
                 </Button>
-              ))}
-            </div>
+                ))}
+              </div>
           </div>
 
           {/* 体験レッスン */}
@@ -305,79 +305,108 @@ const Search = () => {
         </CardContent>
       </Card>
 
-      {/* 検索結果 */}
+        {/* 検索結果 */}
       <div className="mb-4">
         <h2 className="text-xl font-bold">
           検索結果 {loading ? "読み込み中..." : `${classrooms?.length || 0}件`}
-        </h2>
+          </h2>
       </div>
-
-      {loading ? (
-        <div className="text-center py-8">
+          
+          {loading ? (
+            <div className="text-center py-8">
           <p>教室を検索中...</p>
-        </div>
+            </div>
       ) : classrooms && classrooms.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {classrooms.map((classroom) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {classrooms.map((classroom) => (
             <Card key={classroom.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2">{classroom.name}</h3>
-                
-                {/* レッスンタイプ表示 */}
-                {classroom.lesson_types && classroom.lesson_types.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {classroom.lesson_types.map(type => (
-                      <Badge key={type} variant="secondary" className="text-xs">
-                        {translateLessonType(type)}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                
-                <div className="space-y-2 mb-4">
-                  {classroom.area && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      {classroom.area}
-                    </div>
-                  )}
-                  
-                  {classroom.available_days && classroom.available_days.length > 0 && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Clock className="h-4 w-4 mr-1" />
-                      {classroom.available_days.map(day => translateWeekday(day)).join(", ")}
-                    </div>
-                  )}
-                  
-                  {classroom.age_range && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Users className="h-4 w-4 mr-1" />
-                      {classroom.age_range}
-                    </div>
-                  )}
-                  
-                  {classroom.phone && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Phone className="h-4 w-4 mr-1" />
-                      {classroom.phone}
-                    </div>
-                  )}
+              <CardContent className="p-0">
+                {/* 画像表示部分 */}
+                <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
+                  <img
+                    src={classroom.thumbnail_url || classroom.image_url || "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"}
+                    alt={classroom.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 
-                {classroom.trial_lesson_available && (
-                  <Badge className="bg-green-100 text-green-700 mb-3">
-                    体験レッスンあり
-                  </Badge>
-                )}
-                
-                <Button asChild className="w-full cursor-pointer">
-                  <Link to={`/classrooms/${classroom.id}`}>
-                    詳細を見る
-                  </Link>
-                </Button>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold mb-2">{classroom.name}</h3>
+                  
+                  {/* レッスンタイプ表示 */}
+                  {classroom.lesson_types && classroom.lesson_types.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {classroom.lesson_types.map(type => (
+                        <Badge key={type} variant="secondary" className="text-xs">
+                          {translateLessonType(type)}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* 教室の説明 */}
+                  {classroom.description && (
+                    <p className="text-sm text-gray-600 mb-3 overflow-hidden" style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}>
+                      {classroom.description}
+                    </p>
+                  )}
+                  
+                  <div className="space-y-2 mb-4">
+                    {classroom.area && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        {classroom.area}
+                      </div>
+                    )}
+                    
+                    {classroom.available_days && classroom.available_days.length > 0 && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Clock className="h-4 w-4 mr-1" />
+                        {classroom.available_days.map(day => translateWeekday(day)).join(", ")}
+                      </div>
+                    )}
+                    
+                    {classroom.age_range && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Users className="h-4 w-4 mr-1" />
+                        {translateAgeRange(classroom.age_range)}
+                      </div>
+                    )}
+                    
+                    {classroom.price_range && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Star className="h-4 w-4 mr-1" />
+                        {classroom.price_range}
+                      </div>
+                    )}
+                    
+                    {classroom.phone && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Phone className="h-4 w-4 mr-1" />
+                        {classroom.phone}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {classroom.trial_lesson_available && (
+                    <Badge className="bg-green-100 text-green-700 mb-3">
+                      体験レッスンあり
+                    </Badge>
+                  )}
+                  
+                  <Button asChild className="w-full cursor-pointer">
+                    <Link to={`/classrooms/${classroom.id}`}>
+                      詳細を見る
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-          ))}
+              ))}
         </div>
       ) : (
         <Card>

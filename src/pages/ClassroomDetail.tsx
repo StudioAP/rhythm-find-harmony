@@ -110,8 +110,8 @@ const ClassroomDetail = () => {
     return (
       <Layout showBreadcrumb={false}>
         <div className="flex justify-center items-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
       </Layout>
     );
   }
@@ -213,13 +213,13 @@ const ClassroomDetail = () => {
           title: "送信完了",
           description: result.message,
         });
-        // フォームをリセット
-        setContactForm({
-          name: "",
-          email: "",
-          phone: "",
-          message: ""
-        });
+    // フォームをリセット
+    setContactForm({
+      name: "",
+      email: "",
+      phone: "",
+      message: ""
+    });
       } else {
         toast({
           title: "エラー",
@@ -319,16 +319,16 @@ const ClassroomDetail = () => {
             </div>
             
             {/* レッスン情報統合セクション */}
-            <div className="mb-8">
+              <div className="mb-8">
               <h2 className="text-xl font-bold mb-3">レッスン情報</h2>
               <div className="bg-gray-50 p-4 rounded-md space-y-3">
                 {/* 対象年齢 */}
                 {classroom.age_range && classroom.age_range.trim() !== "" && (
                   <div>
                     <p className="text-gray-700"><strong>対象年齢:</strong> {translateAgeRange(classroom.age_range)}</p>
-                  </div>
-                )}
-                
+              </div>
+            )}
+            
                 {/* レッスン時間・曜日 */}
                 {(classroom.available_days && classroom.available_days.length > 0) || (classroom.available_times && classroom.available_times.trim() !== "") ? (
                   <div className="space-y-1">
@@ -352,17 +352,17 @@ const ClassroomDetail = () => {
                     {classroom.price_range && classroom.price_range.trim() !== "" && (
                       <p className="text-gray-700 ml-4">{classroom.price_range}</p>
                     )}
-                    {(classroom.monthly_fee_min != null || classroom.monthly_fee_max != null) && (
+            {(classroom.monthly_fee_min != null || classroom.monthly_fee_max != null) && (
                       <p className="text-gray-700 ml-4">
-                        月謝: {classroom.monthly_fee_min != null ? `${classroom.monthly_fee_min.toLocaleString()}円` : '未設定'}
-                        {(classroom.monthly_fee_min != null && classroom.monthly_fee_max != null && classroom.monthly_fee_min !== classroom.monthly_fee_max) && '〜'}
-                        {(classroom.monthly_fee_max != null && classroom.monthly_fee_max !== classroom.monthly_fee_min) ? `${classroom.monthly_fee_max.toLocaleString()}円` : ''}
-                      </p>
+                    月謝: {classroom.monthly_fee_min != null ? `${classroom.monthly_fee_min.toLocaleString()}円` : '未設定'}
+                    {(classroom.monthly_fee_min != null && classroom.monthly_fee_max != null && classroom.monthly_fee_min !== classroom.monthly_fee_max) && '〜'}
+                    {(classroom.monthly_fee_max != null && classroom.monthly_fee_max !== classroom.monthly_fee_min) ? `${classroom.monthly_fee_max.toLocaleString()}円` : ''}
+                  </p>
                     )}
-                  </div>
+                </div>
                 ) : null}
+                </div>
               </div>
-            </div>
             
             {/* 講師紹介 */}
             {classroom.instructor_info && classroom.instructor_info.trim() !== "" && (
@@ -425,7 +425,7 @@ const ClassroomDetail = () => {
                     </div>
                   </div>
                 ))}
-              </div>
+                </div>
             ) : (
               // デフォルト画像の場合
               <div className="text-center py-8">
@@ -532,55 +532,55 @@ const ClassroomDetail = () => {
           <Card className="mb-8">
             <CardContent className="p-6">
               <h2 className="text-xl font-bold mb-4">お問い合わせ</h2>
-              <form onSubmit={handleContactSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleContactSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="name">お名前 *</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      required
-                      value={contactForm.name}
-                      onChange={handleContactChange}
-                    />
-                  </div>
+                <Input
+                  id="name"
+                  name="name"
+                  required
+                  value={contactForm.name}
+                  onChange={handleContactChange}
+                />
+              </div>
                   <div>
                     <Label htmlFor="email">メールアドレス *</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      value={contactForm.email}
-                      onChange={handleContactChange}
-                    />
-                  </div>
-                </div>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  value={contactForm.email}
+                  onChange={handleContactChange}
+                />
+              </div>
+            </div>
                 <div>
                   <Label htmlFor="phone">電話番号</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    value={contactForm.phone}
-                    onChange={handleContactChange}
-                  />
-                </div>
+              <Input
+                id="phone"
+                name="phone"
+                value={contactForm.phone}
+                onChange={handleContactChange}
+              />
+            </div>
                 <div>
                   <Label htmlFor="message">お問い合わせ内容 *</Label>
-                  <Textarea
-                    id="message"
-                    name="message"
-                    rows={5}
-                    required
-                    value={contactForm.message}
-                    onChange={handleContactChange}
-                    placeholder="レッスンの空き状況や料金について、体験レッスンの希望など詳しくお書きください。"
-                  />
-                </div>
+              <Textarea
+                id="message"
+                name="message"
+                rows={5}
+                required
+                value={contactForm.message}
+                onChange={handleContactChange}
+                placeholder="レッスンの空き状況や料金について、体験レッスンの希望など詳しくお書きください。"
+              />
+            </div>
                 <Button type="submit" disabled={submitting} className="w-full">
                   {submitting ? "送信中..." : "お問い合わせを送信"}
                 </Button>
-              </form>
+          </form>
             </CardContent>
           </Card>
         )}
