@@ -81,6 +81,7 @@ function stripHtml(html: string): string {
 
 // Deno.serve を使用する
 Deno.serve(async (req: Request) => {
+  console.log("[DEBUG] send-general-contact function invoked at:", new Date().toISOString()); // ★★★ 追加: 関数呼び出しログ ★★★
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -129,7 +130,7 @@ Deno.serve(async (req: Request) => {
     const toAdminHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">
-          【ピアノサーチ】お問い合わせがありました
+          【ピアノ教室・リトミック教室検索.com】お問い合わせがありました
         </h2>
         <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin: 20px 0;">
           <p><strong>件名:</strong> ${subject}</p>
@@ -149,7 +150,7 @@ Deno.serve(async (req: Request) => {
     const toSenderHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">
-          【ピアノサーチ】お問い合わせを受け付けました
+          【ピアノ教室・リトミック教室検索.com】お問い合わせを受け付けました
         </h2>
         <p>${senderName} 様</p>
         <p>この度は、ピアノ教室・リトミック教室検索.comにお問い合わせいただき、ありがとうございます。</p>
@@ -190,7 +191,7 @@ Deno.serve(async (req: Request) => {
           from: RESEND_FROM_ADDRESS,
           to: [ADMIN_EMAIL_TO],
           reply_to: [`${senderName} <${senderEmail}>`],
-          subject: `【ピアノサーチ】${subject}`,
+          subject: `【ピアノ教室・リトミック教室検索.com】${subject}`,
           html: toAdminHtml,
           text: `お問い合わせがありました。\n件名: ${subject}\nお名前: ${senderName}\nメールアドレス: ${senderEmail}\n\n内容:\n${textContentForEmail}`,
         }),
@@ -227,7 +228,7 @@ Deno.serve(async (req: Request) => {
                 body: JSON.stringify({
                     from: RESEND_FROM_ADDRESS,
                     to: [senderEmail],
-                    subject: '【ピアノサーチ】お問い合わせを受け付けました',
+                    subject: '【ピアノ教室・リトミック教室検索.com】お問い合わせを受け付けました',
                     html: toSenderHtml,
                     text: `${senderName} 様\n\nお問い合わせありがとうございます。以下の内容で受け付けました。\n件名: ${subject}\nお名前: ${senderName}\nメールアドレス: ${senderEmail}\n\n内容:\n${textContentForEmail}`,
                 }),
@@ -238,7 +239,7 @@ Deno.serve(async (req: Request) => {
                 // Update log details for sender context
                 sender_name: senderName, 
                 sender_email: senderEmail, 
-                subject: '【ピアノサーチ】お問い合わせを受け付けました', 
+                subject: '【ピアノ教室・リトミック教室検索.com】お問い合わせを受け付けました', 
                 recipient_type: "sender", 
                 to_email: senderEmail, 
                 status_code: senderEmailResponse.status, 
@@ -252,7 +253,7 @@ Deno.serve(async (req: Request) => {
             await recordMailLog({ 
                 sender_name: senderName, 
                 sender_email: senderEmail, 
-                subject: '【ピアノサーチ】お問い合わせを受け付けました', 
+                subject: '【ピアノ教室・リトミック教室検索.com】お問い合わせを受け付けました', 
                 recipient_type: "sender", 
                 to_email: senderEmail, 
                 status_code: (e instanceof Error && e.name === 'TimeoutError') ? 408 : 500, 
