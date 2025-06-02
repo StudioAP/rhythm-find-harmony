@@ -5,7 +5,7 @@ import Layout from "@/components/layout/Layout";
 
 const About = () => {
   return (
-    <Layout title="Piano Searchについて">
+    <Layout title="ピアノ教室・リトミック教室検索.comについて">
           <div className="space-y-8">
             <Card>
               <CardHeader>
@@ -13,7 +13,7 @@ const About = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 leading-relaxed">
-                  Piano Searchは、音楽を学びたい人と質の高いピアノ教室・リトミック教室を繋ぐプラットフォームです。
+                  ピアノ教室・リトミック教室検索.comは、音楽を学びたい人と質の高いピアノ教室・リトミック教室を繋ぐプラットフォームです。
                   音楽教育を通じて、より豊かな人生を送るお手伝いをしたいと考えています。
                 </p>
               </CardContent>
@@ -53,7 +53,7 @@ const About = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <p><span className="font-bold">サービス名：</span>Piano Search</p>
+                  <p><span className="font-bold">サービス名：</span>ピアノ教室・リトミック教室検索.com</p>
                   <p><span className="font-bold">設立：</span>2025年</p>
                   <p><span className="font-bold">事業内容：</span>ピアノ教室・リトミック教室検索プラットフォームの運営</p>
                 </div>

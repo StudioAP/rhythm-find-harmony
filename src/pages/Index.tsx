@@ -122,7 +122,7 @@ const Index = () => {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">教室を運営されている方へ</h2>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            あなたの教室をPiano Searchに掲載しませんか？<br />
+                          あなたの教室をピアノ教室・リトミック教室検索.comに掲載しませんか？<br />
             月額たった500円で、新しい生徒との出会いをサポートします
           </p>
           <Button size="lg" asChild>

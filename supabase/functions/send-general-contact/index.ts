@@ -124,9 +124,58 @@ Deno.serve(async (req: Request) => {
     }
 
     const textContentForEmail = stripHtml(message);
-    // Ensure HTML content uses variables correctly
-    const toAdminHtml = `<p>${message}</p>`; // Example, replace with actual rich HTML
-    const toSenderHtml = `<p>Thank you, ${senderName}. We received: ${message}</p>`; // Example
+    
+    // 管理者向けメール（HTMLフォーマット）
+    const toAdminHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">
+          【ピアノサーチ】お問い合わせがありました
+        </h2>
+        <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin: 20px 0;">
+          <p><strong>件名:</strong> ${subject}</p>
+          <p><strong>お名前:</strong> ${senderName}</p>
+          <p><strong>メールアドレス:</strong> ${senderEmail}</p>
+        </div>
+        <div style="background: white; padding: 20px; border-left: 4px solid #007cba; margin: 20px 0;">
+          <h3 style="color: #333; margin-top: 0;">お問い合わせ内容</h3>
+          <div style="line-height: 1.6;">${message.replace(/\n/g, '<br>')}</div>
+        </div>
+        <p style="color: #666; font-size: 12px; margin-top: 30px;">
+          このメールは ピアノ教室・リトミック教室検索.com から自動送信されました。
+        </p>
+      </div>`;
+    
+    // 送信者向け確認メール（HTMLフォーマット）
+    const toSenderHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">
+          【ピアノサーチ】お問い合わせを受け付けました
+        </h2>
+        <p>${senderName} 様</p>
+        <p>この度は、ピアノ教室・リトミック教室検索.comにお問い合わせいただき、ありがとうございます。</p>
+        <p>下記の内容でお問い合わせを受け付けました。確認次第、ご返信いたします。</p>
+        
+        <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin: 20px 0;">
+          <h3 style="color: #333; margin-top: 0;">お問い合わせ内容</h3>
+          <p><strong>件名:</strong> ${subject}</p>
+          <p><strong>お名前:</strong> ${senderName}</p>
+          <p><strong>メールアドレス:</strong> ${senderEmail}</p>
+          <div style="margin-top: 15px;">
+            <strong>お問い合わせ内容:</strong><br>
+            <div style="background: white; padding: 15px; border-left: 4px solid #007cba; margin-top: 10px; line-height: 1.6;">
+              ${message.replace(/\n/g, '<br>')}
+            </div>
+          </div>
+        </div>
+        
+        <p>このメールは <strong>ピアノ教室・リトミック教室検索.com</strong> から自動送信されました。<br>
+        ご不明点がございましたら、お気軽にお問い合わせください。</p>
+        
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+        <p style="color: #666; font-size: 12px;">
+          © 2025 ピアノ教室・リトミック教室検索.com All rights reserved.
+        </p>
+      </div>`;
 
     const fetchTimeoutMs = 10000;
 

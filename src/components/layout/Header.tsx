@@ -25,7 +25,7 @@ const Header = ({ showAuth = true, variant = "default" }: HeaderProps) => {
           to="/" 
           className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors"
         >
-          Piano Search
+                        ピアノ教室・リトミック教室検索.com
         </Link>
 
         {/* Navigation Links - 現在位置を明示 */}

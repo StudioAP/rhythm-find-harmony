@@ -153,7 +153,7 @@ const Auth = () => {
     <Layout showHeader={false} showBreadcrumb={false} className="bg-gray-50 min-h-screen flex flex-col justify-center">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="text-center text-3xl font-bold text-gray-900 mb-8">
-          Piano Search
+                      ピアノ教室・リトミック教室検索.com
         </h2>
       </div>
 
