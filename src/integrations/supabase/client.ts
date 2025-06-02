@@ -1,3 +1,6 @@
+console.log("[DEBUG] VITE_SUPABASE_URL from client.ts:", import.meta.env.VITE_SUPABASE_URL);
+console.log("[DEBUG] VITE_SUPABASE_ANON_KEY from client.ts:", import.meta.env.VITE_SUPABASE_ANON_KEY ? import.meta.env.VITE_SUPABASE_ANON_KEY.substring(0, 20) + '...' : 'NOT SET');
+
 // Supabase client configuration with environment variables
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
