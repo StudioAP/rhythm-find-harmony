@@ -14,10 +14,13 @@ import {
   Globe, 
   Users, 
   Info,
-  Star
+  Star,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/providers/AuthProvider";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AGE_GROUPS, LESSON_TYPES, WEEKDAYS } from "@/constants/classroomData";
@@ -45,6 +48,11 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // 都道府県一覧
 const prefectures = [
@@ -77,6 +85,13 @@ const formSchema = z.object({
 });
 
 type ClassroomFormValues = z.infer<typeof formSchema>;
+
+// existingClassroom state がDBの published 状態を保持できるように型を拡張
+interface ExtendedClassroomFormValues extends ClassroomFormValues {
+  publishedDbState?: boolean; // DBから読み込んだ実際の公開状態
+  thumbnail_url?: string | null; // DBから読み込んだサムネイルURL
+  image_urls?: string[] | null; // DBから読み込んだ画像URLリスト
+}
 
 // 型定義の追加
 interface DatabaseClassroom {
@@ -114,13 +129,39 @@ const ClassroomRegistration = () => {
   const [thumbnailIndex, setThumbnailIndex] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [existingClassroom, setExistingClassroom] = useState<ClassroomFormValues | null>(null);
+  const [existingClassroom, setExistingClassroom] = useState<ExtendedClassroomFormValues | null>(null);
+  const [publishStatus, setPublishStatus] = useState<'public' | 'draft'>('draft');
   
   // ObjectURLキャッシュ（メモリリーク防止）
   const objectUrlsRef = useRef<Map<File, string>>(new Map());
   
   const { user, loading: authLoading } = useAuth();
+  const { subscription, loading: subscriptionLoading, refreshSubscriptionStatus } = useSubscription();
   const navigate = useNavigate();
+  console.log('🔧 navigate function:', typeof navigate, navigate);
+  console.log('👤 Current user from AuthProvider:', user);
+
+  // 支払い状況と既存データに基づいて公開ステータスを初期化
+  useEffect(() => {
+    if (authLoading || subscriptionLoading || loading) {
+      return;
+    }
+
+    if (existingClassroom) {
+      // existingClassroom.publishedDbState を参照するように変更
+      if (existingClassroom.publishedDbState) {
+        setPublishStatus('public');
+      } else {
+        setPublishStatus('draft');
+      }
+    } else {
+      if (subscription && subscription.hasActiveSubscription) {
+        setPublishStatus('public');
+      } else {
+        setPublishStatus('draft');
+      }
+    }
+  }, [existingClassroom, subscription, authLoading, subscriptionLoading, loading]);
 
   // 認証チェック（認証状態確定後のみ）
   useEffect(() => {
@@ -170,8 +211,8 @@ const ClassroomRegistration = () => {
   // 既存の下書きデータを読み込み
   useEffect(() => {
     const loadDraftData = async () => {
-      if (!user) return;
-
+      if (!user) { setLoading(false); return; }
+      setLoading(true);
       try {
         const { data, error } = await supabase
           .from('classrooms')
@@ -180,179 +221,124 @@ const ClassroomRegistration = () => {
           .maybeSingle();
 
         if (error && error.code !== 'PGRST116') {
-          console.error('下書きデータ取得エラー:', error);
-          toast({
-            title: "データ読み込みエラー",
-            description: "下書きデータの読み込みに失敗しました",
-            variant: "destructive",
-          });
+          console.error("下書きデータ読み込みエラー:", error);
+          toast({ title: "エラー", description: "データの読み込みに失敗しました。", variant: "destructive" });
+          setLoading(false);
           return;
         }
 
         if (data) {
-          // データベースのカラム名をフォーム形式に変換
+          const prefecture = (data.area && typeof data.area === 'string' && data.area.includes(' ')) ? data.area.split(' ')[0] : (data.area && typeof data.area === 'string' ? data.area : "");
+          const city = (data.area && typeof data.area === 'string' && data.area.includes(' ')) ? data.area.split(' ').slice(1).join(' ') : "";
+          
+          const parseStringToArray = (value: unknown): string[] => {
+            if (Array.isArray(value)) return value.filter(s => typeof s === 'string');
+            if (value && typeof value === 'string' && value.trim().length > 0) {
+              return value.split(',').map(s => s.trim()).filter(Boolean);
+            }
+            return [];
+          };
+
+          const lessonTypes = parseStringToArray(data.lesson_types);
+          const targetAges = parseStringToArray(data.age_range);
+          const availableDays = parseStringToArray(data.available_days);
+          
           const formData: ClassroomFormValues = {
             name: data.name || "",
             description: data.description || "",
-            prefecture: data.area?.split(' ')[0] || "", // "東京都 渋谷区" → "東京都"
-            city: data.area?.split(' ').slice(1).join(' ') || "", // "東京都 渋谷区" → "渋谷区"
+            prefecture: prefecture,
+            city: city,
             address: data.address || "",
             phone: data.phone || "",
             email: data.email || "",
             website_url: data.website_url || "",
-            lesson_types: Array.isArray(data.lesson_types) ? data.lesson_types : [],
-            target_ages: data.age_range ? data.age_range.split(', ').map((age: string) => age.trim()).filter(Boolean) : [],
-            available_days: Array.isArray(data.available_days) ? data.available_days : [],
+            lesson_types: lessonTypes,
+            target_ages: targetAges,
+            available_days: availableDays,
             available_times: data.available_times || "",
-            price_range: data.price_range || (data.monthly_fee_min && data.monthly_fee_max 
-              ? `月謝${data.monthly_fee_min}円〜${data.monthly_fee_max}円`
-              : ""),
+            price_range: data.price_range || "",
             instructor_info: data.instructor_info || "",
             pr_points: data.pr_points || "",
           };
 
-          setExistingClassroom(formData);
+          setExistingClassroom({ 
+            ...formData, 
+            publishedDbState: data.published,
+            thumbnail_url: data.thumbnail_url,
+            image_urls: data.image_urls
+          });
           
-          // フォームに既存データを設定
           form.reset(formData);
 
-          // 既存画像データを復元
-          if (data.image_urls && Array.isArray(data.image_urls) && data.image_urls.length > 0) {
-            // 有効な画像URLのみを保存
-            const validImageUrls = data.image_urls.filter(url => typeof url === 'string' && url.length > 0);
-            setExistingImageUrls(validImageUrls);
-            
-            // サムネイル選択状態を復元
-            if (data.thumbnail_url && typeof data.thumbnail_url === 'string') {
-              const thumbnailIdx = validImageUrls.findIndex(url => url === data.thumbnail_url);
-              if (thumbnailIdx !== -1) {
-                setThumbnailIndex(thumbnailIdx);
+          if (data.image_urls && Array.isArray(data.image_urls)) {
+            setExistingImageUrls(data.image_urls);
+            if (data.thumbnail_url && data.image_urls.includes(data.thumbnail_url)) {
+                setThumbnailIndex(data.image_urls.indexOf(data.thumbnail_url));
+            } else if (data.image_urls.length > 0) {
+                setThumbnailIndex(0);
+            }
               } else {
-                // サムネイルURLが配列に見つからない場合は最初の画像をサムネイルに
+            setExistingImageUrls([]);
                 setThumbnailIndex(0);
               }
-            }
-          }
-
-          toast({
-            title: "下書きデータを読み込みました",
-            description: "保存済みの教室情報を表示しています",
-          });
+          toast({ title: "下書き読み込み完了", description: "以前保存したデータを読み込みました。" });
         }
       } catch (error) {
-        console.error('下書きデータ読み込みエラー:', error);
-        toast({
-          title: "エラー",
-          description: "データの読み込み中にエラーが発生しました",
-          variant: "destructive",
-        });
+        console.error("下書きデータ読み込み中に予期せぬエラー:", error);
+        toast({ title: "エラー", description: "データの読み込み中に問題が発生しました。", variant: "destructive" });
       } finally {
         setLoading(false);
       }
     };
 
+    if (user) { 
     loadDraftData();
+    } else {
+        setLoading(false); 
+    }
   }, [user, form]);
 
-  // 画像アップロード処理
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      const currentTotalImages = existingImageUrls.length + images.length;
-      
-      // 5枚制限チェック
-      if (currentTotalImages + newFiles.length > 5) {
-        toast({
-          title: "画像枚数制限",
-          description: `画像は最大5枚まで登録できます。現在${currentTotalImages}枚登録済みです。`,
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setImages(prev => [...prev, ...newFiles]);
-    }
-  };
-
-  // 画像削除処理
-  const handleRemoveImage = (index: number) => {
-    const totalExistingImages = existingImageUrls.length;
-    const totalImages = getAllImages().length;
-    
-    // 境界チェック
-    if (index < 0 || index >= totalImages) {
-      console.error(`Invalid image index for removal: ${index}`);
-      toast({
-        title: "エラー",
-        description: "無効な画像インデックスです",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+  const uploadFileToSupabase = async (file: File, userId: string): Promise<string | null> => {
     try {
-      if (index < totalExistingImages) {
-        // 既存画像の削除
-        const removedUrl = existingImageUrls[index];
-        setExistingImageUrls(prev => prev.filter((_, i) => i !== index));
-        
-        console.log(`Removed existing image at index ${index}: ${removedUrl}`);
-        
-      } else {
-        // 新規画像の削除
-        const newImageIndex = index - totalExistingImages;
-        if (newImageIndex < 0 || newImageIndex >= images.length) {
-          throw new Error(`Invalid new image index: ${newImageIndex}`);
-        }
-        
-        const fileToRemove = images[newImageIndex];
-        
-        // ObjectURLクリーンアップ
-        if (objectUrlsRef.current.has(fileToRemove)) {
-          const url = objectUrlsRef.current.get(fileToRemove)!;
-          URL.revokeObjectURL(url);
-          objectUrlsRef.current.delete(fileToRemove);
-          console.log(`Cleaned up ObjectURL for file: ${fileToRemove.name}`);
-        }
-        
-        setImages(prev => prev.filter((_, i) => i !== newImageIndex));
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}-${Date.now()}.${fileExt}`;
+      const bucketName = 'classrooms';
+      const filePath = `${userId}/${fileName}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        toast({title: "画像アップロードエラー", description: `ファイル名: ${file.name} - ${uploadError.message}`, variant: "destructive"});
+        return null;
       }
-      
-      // サムネイルインデックスの適切な調整
-      if (thumbnailIndex === index) {
-        // 削除された画像がサムネイルの場合、最初の画像をサムネイルに
-        const newTotalImages = totalImages - 1;
-        setThumbnailIndex(newTotalImages > 0 ? 0 : 0);
-      } else if (thumbnailIndex > index) {
-        // サムネイルより前の画像が削除された場合、インデックスを1つ前に
-        setThumbnailIndex(prev => Math.max(0, prev - 1));
+      if (!uploadData || !uploadData.path) {
+        console.error('Storage upload error: No path returned');
+        toast({title: "画像アップロードエラー", description: `ファイル名: ${file.name} - パス取得失敗`, variant: "destructive"});
+        return null;
       }
-      
-      // 全画像削除時の処理
-      if (totalImages === 1) {
-        setThumbnailIndex(0);
-      }
-      
-    } catch (error) {
-      console.error('Image removal error:', error);
-      toast({
-        title: "エラー",
-        description: "画像の削除に失敗しました",
-        variant: "destructive",
-      });
+      const { data: urlData } = supabase.storage.from(bucketName).getPublicUrl(uploadData.path);
+      return urlData.publicUrl;
+    } catch (e) {
+      console.error('File upload failed unexpectedly:', e);
+      let desc = "予期せぬエラーが発生しました。";
+      if (e instanceof Error) desc = e.message;
+      toast({title: "画像アップロード例外", description: desc, variant: "destructive"});
+      return null;
     }
   };
 
-  // 統合された画像リストの取得
+  // 統合された画像リストの取得 (JSX表示用)
   const getAllImages = (): (string | File)[] => {
     return [...existingImageUrls, ...images];
   };
-
-  // 画像表示のためのURL取得（メモリリーク防止）
+      
+  // 画像表示のためのURL取得（メモリリーク防止対応済み）
   const getImageUrl = (index: number): string => {
     const totalExistingImages = existingImageUrls.length;
     if (index < 0 || index >= getAllImages().length) {
-      throw new Error(`Invalid image index: ${index}`);
+      console.error(`getImageUrl: Invalid image index ${index}`);
+      return ""; // Return a placeholder or empty string
     }
     
     if (index < totalExistingImages) {
@@ -360,10 +346,9 @@ const ClassroomRegistration = () => {
     } else {
       const file = images[index - totalExistingImages];
       if (!(file instanceof File)) {
-        throw new Error(`Invalid file object at index: ${index}`);
+        console.error(`getImageUrl: Invalid file object at new image index ${index - totalExistingImages}`);
+        return "";
       }
-      
-      // キャッシュから取得、なければ新しく作成
       if (!objectUrlsRef.current.has(file)) {
         const url = URL.createObjectURL(file);
         objectUrlsRef.current.set(file, url);
@@ -372,149 +357,160 @@ const ClassroomRegistration = () => {
     }
   };
 
-  // Supabase Storage に画像をアップロードし、公開URLを取得する関数を追加
-  const uploadImage = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${crypto.randomUUID()}.${fileExt}`;
-    // 'classroom-images' バケットにアップロード
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('classroom-images')
-      .upload(fileName, file, { cacheControl: '3600', upsert: false });
-    if (uploadError) throw uploadError;
-    const { data: urlData } = supabase.storage
-      .from('classroom-images')
-      .getPublicUrl(fileName);
-    return urlData.publicUrl;
+  const handleRemoveImage = (indexToRemove: number) => { // 'type' argument removed as it's implicit
+    const totalExistingImages = existingImageUrls.length;
+    const totalImages = getAllImages().length;
+    
+    if (indexToRemove < 0 || indexToRemove >= totalImages) {
+      console.error(`handleRemoveImage: Invalid image index: ${indexToRemove}`);
+      toast({ title: "エラー", description: "無効な画像インデックスです", variant: "destructive" });
+      return;
+    }
+    
+    try {
+      if (indexToRemove < totalExistingImages) {
+        setExistingImageUrls(prev => prev.filter((_, i) => i !== indexToRemove));
+      } else {
+        const newImageIndex = indexToRemove - totalExistingImages;
+        const fileToRemove = images[newImageIndex];
+        if (objectUrlsRef.current.has(fileToRemove)) {
+          URL.revokeObjectURL(objectUrlsRef.current.get(fileToRemove)!);
+          objectUrlsRef.current.delete(fileToRemove);
+        }
+        setImages(prev => prev.filter((_, i) => i !== newImageIndex));
+      }
+      
+      if (thumbnailIndex === indexToRemove) {
+        setThumbnailIndex(totalImages - 1 > 0 ? 0 : 0);
+      } else if (thumbnailIndex > indexToRemove) {
+        setThumbnailIndex(prev => Math.max(0, prev - 1));
+      }
+      if (totalImages === 1) { // If the last image was removed
+        setThumbnailIndex(0); // Reset thumbnail index
+      }
+    } catch (error) {
+      console.error('Image removal error:', error);
+      toast({ title: "エラー", description: "画像の削除に失敗しました", variant: "destructive" });
+    }
   };
 
-  // 下書き保存処理（無料機能）
-  const saveDraft = async (data: ClassroomFormValues) => {
+  const handleThumbnailSelect = (index: number) => {
+    const totalImages = getAllImages().length;
+    if (index >= 0 && index < totalImages) {
+      setThumbnailIndex(index);
+    } else {
+      console.warn('handleThumbnailSelect: Invalid index ' + index + ' for ' + totalImages + ' images.');
+    }
+  };
+  
+  const onSubmit = async (data: ClassroomFormValues) => {
     if (!user) {
+      toast({ title: "エラー", description: "ログインが必要です", variant: "destructive" });
+      return;
+    }
+
+    if (publishStatus === 'public' && !(subscription && subscription.hasActiveSubscription)) {
       toast({
-        title: "エラー",
-        description: "ログインが必要です",
-        variant: "destructive",
+        title: "公開できません",
+        description: "教室情報を公開するには、料金プランへのお支払いが必要です。",
       });
       return;
     }
 
     setIsSubmitting(true);
-    console.log("下書き保存データ:", data);
-    
-    // 画像処理：既存画像URLsと新規画像アップロードを統合
-    let image_urls: string[] = [...existingImageUrls]; // 既存画像URLをベースに
-    let thumbnail_url: string | null = null;
-    
-    // 新規画像があればアップロード
-    if (images.length > 0) {
-      try {
-        const newUrls = await Promise.all(images.map(uploadImage));
-        image_urls = [...image_urls, ...newUrls];
-      } catch (error) {
-        toast({
-          title: "画像アップロードに失敗しました",
-          description: "画像をアップロードできませんでした。",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-    }
-    
-    // サムネイル設定（境界チェック強化）
-    if (image_urls.length > 0) {
-      // thumbnailIndexが有効範囲内かチェック
-      if (thumbnailIndex >= 0 && thumbnailIndex < image_urls.length) {
-        thumbnail_url = image_urls[thumbnailIndex];
-      } else {
-        // 無効な場合は最初の画像をサムネイルに
-        thumbnail_url = image_urls[0];
-        setThumbnailIndex(0);
-      }
-    }
+    console.log("フォーム送信データ:", data);
+    console.log("選択された公開ステータス:", publishStatus);
 
     try {
-      // フォームデータをデータベース形式に変換
-      const classroomData = {
+      let newUploadedUrls: string[] = [];
+      if (images.length > 0) {
+        const uploadPromises: Promise<string | null>[] = images.map(file => uploadFileToSupabase(file, user.id)); 
+        const newlyUploadedNullable = await Promise.all(uploadPromises);
+        newUploadedUrls = newlyUploadedNullable.filter(url => url !== null) as string[];
+      }
+      
+      const finalImageUrls = [...existingImageUrls, ...newUploadedUrls]; 
+      let currentThumbnailUrl: string | null = existingClassroom?.thumbnail_url || null;
+      
+      if (finalImageUrls.length > 0) {
+        if (thumbnailIndex < existingImageUrls.length) {
+          currentThumbnailUrl = existingImageUrls[thumbnailIndex];
+      } else {
+          const newImageBaseIndex = existingImageUrls.length;
+          const newImageSelectionIndex = thumbnailIndex - newImageBaseIndex;
+          if (newImageSelectionIndex >= 0 && newImageSelectionIndex < newUploadedUrls.length) {
+            currentThumbnailUrl = newUploadedUrls[newImageSelectionIndex];
+          } else {
+            currentThumbnailUrl = finalImageUrls[0]; 
+      }
+    }
+      } else { currentThumbnailUrl = null; }
+
+      const classroomDataToSave = {
         user_id: user.id,
         name: data.name,
         description: data.description,
-        area: `${data.prefecture} ${data.city}`, // "東京都 渋谷区"
+        area: `${data.prefecture} ${data.city}`,
         address: data.address,
         phone: data.phone || null,
         email: data.email,
         website_url: data.website_url || null,
         lesson_types: data.lesson_types,
-        age_range: data.target_ages.join(', '), // 配列を文字列に変換
-        image_urls: image_urls.length > 0 ? image_urls : null,
-        thumbnail_url,
+        age_range: data.target_ages.join(', '),
+        image_urls: finalImageUrls.length > 0 ? finalImageUrls : null,
+        thumbnail_url: currentThumbnailUrl,
         available_days: data.available_days,
         available_times: data.available_times || null,
         price_range: data.price_range,
         instructor_info: data.instructor_info || null,
         pr_points: data.pr_points || null,
-        monthly_fee_min: null, // 後で料金解析実装予定
-        monthly_fee_max: null,
-        trial_lesson_available: false,
-        parking_available: false,
-        published: false, // 下書きは非公開
-        draft_saved: true, // 下書き保存フラグ
-        last_draft_saved_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        published: publishStatus === 'public',
+        draft_saved: publishStatus === 'draft',
       };
+      console.log("保存する教室データ:", classroomDataToSave);
 
-      // 既存レコードがあるかチェック
-      const { data: existingData } = await supabase
-        .from('classrooms')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (existingData) {
-        // 更新
+      let supabaseError = null;
+      if (existingClassroom) {
         const { error } = await supabase
           .from('classrooms')
-          .update(classroomData)
-          .eq('user_id', user.id);
-
-        if (error) throw error;
+          .update(classroomDataToSave)
+          .eq('user_id', user.id); // 既存の教室はuser_idで一意に特定
+        supabaseError = error;
       } else {
-        // 新規作成
         const { error } = await supabase
           .from('classrooms')
-          .insert([classroomData]);
+          .insert(classroomDataToSave);
+        supabaseError = error;
+      }
 
-        if (error) throw error;
+      if (supabaseError) {
+        throw supabaseError;
       }
 
       toast({
-        title: "保存完了",
-        description: "下書きとして保存しました。いつでも編集・公開できます。",
+        title: "成功",
+        description: `教室情報が${publishStatus === 'public' ? '公開' : '下書き保存'}されました。`,
       });
-
-      // 新規画像のObjectURLをクリーンアップ
-      images.forEach(file => {
-        if (objectUrlsRef.current.has(file)) {
-          const url = objectUrlsRef.current.get(file)!;
+      await refreshSubscriptionStatus();
+      images.forEach(file => { // 新規アップロードした画像のObjectURLを解放
+        const url = objectUrlsRef.current.get(file);
+        if (url) {
           URL.revokeObjectURL(url);
           objectUrlsRef.current.delete(file);
         }
       });
+      setImages([]); // 新規画像リストをクリア
+      navigate('/dashboard');
       
-      // 保存成功後、新規画像をexistingImageUrlsに移行
-      if (images.length > 0) {
-        setExistingImageUrls(image_urls);
-        setImages([]);
+    } catch (error: unknown) {
+      console.error("教室情報の保存エラー:", error);
+      let errorMessage = "教室情報の保存に失敗しました。";
+      if (error instanceof Error) {
+        errorMessage = `教室情報の保存に失敗しました: ${error.message}`;
       }
-
-      // ダッシュボードへリダイレクト
-      navigate("/dashboard");
-      
-    } catch (error) {
-      console.error("下書き保存エラー:", error);
       toast({
         title: "エラー",
-        description: "下書き保存に失敗しました。もう一度お試しください。",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -522,20 +518,6 @@ const ClassroomRegistration = () => {
     }
   };
 
-  // フォーム送信処理（下書き保存として扱う）
-  const onSubmit = async (data: ClassroomFormValues) => {
-    await saveDraft(data);
-  };
-
-  // サムネイル選択処理（境界チェック付き）
-  const handleThumbnailSelect = (index: number) => {
-    const totalImages = getAllImages().length;
-    if (index >= 0 && index < totalImages) {
-      setThumbnailIndex(index);
-    }
-  };
-
-  // ローディング中の表示
   if (loading || authLoading) {
     return (
       <Layout showBreadcrumb={false}>
@@ -549,10 +531,11 @@ const ClassroomRegistration = () => {
     );
   }
 
-  // 未認証の場合は何も表示しない（リダイレクト処理中）
   if (!user) {
     return null;
   }
+
+  const canPublish = subscription && subscription.hasActiveSubscription;
 
   return (
     <Layout title={existingClassroom ? '教室情報編集' : '教室情報登録'}>
@@ -591,7 +574,7 @@ const ClassroomRegistration = () => {
                   <FormItem>
                     <FormLabel>教室名 *</FormLabel>
                     <FormControl>
-                      <Input placeholder="例：〇〇ピアノ教室" {...field} />
+                      <Input placeholder="例：ABC音楽教室" {...field} data-testid="classroom-name" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -605,11 +588,7 @@ const ClassroomRegistration = () => {
                   <FormItem>
                     <FormLabel>教室の説明 *</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="教室の特徴や雰囲気、指導方針などを記入してください" 
-                        {...field} 
-                        className="min-h-[120px]"
-                      />
+                      <Textarea placeholder="教室の特徴やレッスン内容などを詳しく説明してください" {...field} rows={8} data-testid="classroom-description" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -640,7 +619,21 @@ const ClassroomRegistration = () => {
                           accept="image/*"
                           multiple
                           className="hidden"
-                          onChange={handleImageUpload}
+                          onChange={(e) => { // This onChange handles file selection
+                            if (e.target.files) {
+                              const newFiles = Array.from(e.target.files);
+                              const currentTotalImages = getAllImages().length; // Use getAllImages here
+                              if (currentTotalImages + newFiles.length > 5) {
+                                toast({
+                                  title: "画像枚数制限",
+                                  description: `画像は最大5枚まで登録できます。現在${currentTotalImages}枚登録済みです。`,
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
+                              setImages(prev => [...prev, ...newFiles]);
+                            }
+                          }}
                         />
                       </label>
                     </div>
@@ -660,15 +653,14 @@ const ClassroomRegistration = () => {
                           />
                           <button
                             type="button"
-                            onClick={() => handleRemoveImage(index)}
+                            onClick={(e) => { e.stopPropagation(); handleRemoveImage(index); }}
                             className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             ✕
                           </button>
-                          {/* サムネイル選択ボタン */}
                           <button
                             type="button"
-                              onClick={() => handleThumbnailSelect(index)}
+                            onClick={(e) => { e.stopPropagation(); handleThumbnailSelect(index); }}
                             className={`absolute bottom-1 left-1 p-1 rounded-full transition-opacity ${index === thumbnailIndex ? 'bg-blue-500' : 'bg-gray-500/70'}`}
                           >
                             <Star className="h-4 w-4 text-white" />
@@ -699,12 +691,9 @@ const ClassroomRegistration = () => {
                   <FormItem>
                     <FormLabel>都道府県 *</FormLabel>
                     <FormControl>
-                      <select
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        {...field}
-                      >
+                      <select {...field} className="w-full p-2 border border-gray-300 rounded-md" data-testid="classroom-prefecture">
                         <option value="">選択してください</option>
-                        {prefectures.map((pref) => (
+                        {prefectures.map(pref => (
                           <option key={pref} value={pref}>
                             {pref}
                           </option>
@@ -723,7 +712,7 @@ const ClassroomRegistration = () => {
                   <FormItem>
                     <FormLabel>市区町村 *</FormLabel>
                     <FormControl>
-                      <Input placeholder="例：渋谷区" {...field} />
+                      <Input placeholder="例：渋谷区" {...field} data-testid="classroom-city" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -735,9 +724,9 @@ const ClassroomRegistration = () => {
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>番地・建物名 *</FormLabel>
+                    <FormLabel>番地以降の住所 *</FormLabel>
                     <FormControl>
-                      <Input placeholder="例：1-2-3 〇〇ビル2F" {...field} />
+                      <Input placeholder="例：神南1-1-1 ABCビル2F" {...field} data-testid="classroom-address" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -763,7 +752,7 @@ const ClassroomRegistration = () => {
                   <FormItem>
                     <FormLabel>電話番号</FormLabel>
                     <FormControl>
-                      <Input placeholder="例：03-1234-5678" {...field} />
+                      <Input placeholder="例：03-1234-5678" {...field} data-testid="classroom-phone" />
                     </FormControl>
                     <FormDescription>
                       公開したくない場合は空欄でも構いません
@@ -780,7 +769,7 @@ const ClassroomRegistration = () => {
                   <FormItem>
                     <FormLabel>メールアドレス *</FormLabel>
                     <FormControl>
-                      <Input placeholder="例：info@example.com" {...field} />
+                      <Input placeholder="info@example.com" {...field} data-testid="classroom-email" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -792,9 +781,9 @@ const ClassroomRegistration = () => {
                 name="website_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ウェブサイト</FormLabel>
+                    <FormLabel>ウェブサイトURL</FormLabel>
                     <FormControl>
-                      <Input placeholder="例：https://www.example.com" {...field} />
+                      <Input placeholder="https://example.com" {...field} data-testid="classroom-website" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -843,6 +832,7 @@ const ClassroomRegistration = () => {
                                             )
                                           );
                                     }}
+                                    data-testid={`lesson-type-${type.id}`}
                                   />
                                 </FormControl>
                                 <FormLabel className="font-normal">
@@ -889,6 +879,7 @@ const ClassroomRegistration = () => {
                                             )
                                           );
                                     }}
+                                    data-testid={`target-age-${age.id}`}
                                   />
                                 </FormControl>
                                 <FormLabel className="font-normal">
@@ -970,9 +961,9 @@ const ClassroomRegistration = () => {
                 name="price_range"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>料金目安 *</FormLabel>
+                    <FormLabel>料金目安（月謝など）*</FormLabel>
                     <FormControl>
-                      <Input placeholder="例：月謝8,000円〜12,000円、入会金5,000円" {...field} />
+                      <Input placeholder="例：月謝8,000円〜12,000円" {...field} data-testid="classroom-price-range" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1029,23 +1020,65 @@ const ClassroomRegistration = () => {
             </CardContent>
           </Card>
 
-          {/* 送信ボタン */}
-          <div className="flex flex-col gap-4 items-center">
-            <Button type="submit" className="w-full max-w-md" disabled={isSubmitting}>
-              {isSubmitting ? "保存中..." : existingClassroom ? "変更を保存" : "下書きとして保存"}
-            </Button>
-            <div className="text-center space-y-2">
-            <p className="text-sm text-muted-foreground">
-                💡 無料で下書き保存できます。公開は管理画面から月額500円でスタート！
-              </p>
-              <p className="text-xs text-gray-400">
-                保存後はいつでも編集・修正が可能です
-            </p>
-            </div>
-            <Link to="/dashboard" className="text-sm text-primary hover:underline">
-              管理画面へ戻る
-            </Link>
+          {/* 公開ステータス選択UI */} 
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-700 flex items-center">
+              <Eye className="mr-2 h-5 w-5 text-sky-600" /> 公開設定
+            </h3>
+            <div className="flex items-center space-x-2 p-4 border rounded-md bg-gray-50">
+              <Switch
+                id="publish-status-switch"
+                checked={publishStatus === 'public'}
+                onCheckedChange={(checked) => {
+                  setPublishStatus(checked ? 'public' : 'draft');
+                }}
+                disabled={!canPublish && publishStatus === 'draft'} // 未払いで下書き状態の場合、公開への変更を不可
+                data-testid="publish-status-switch"
+              />
+              <Label htmlFor="publish-status-switch" className="flex-grow">
+                {publishStatus === 'public' ? "教室を公開する" : "下書きとして保存"}
+              </Label>
+              {!canPublish && (
+                <p className="text-xs text-orange-600 bg-orange-100 p-2 rounded-md">
+                  <Info className="inline mr-1 h-4 w-4" />
+                  教室を公開するには、まず料金プランへのお支払いが必要です。
+                  {existingClassroom && publishStatus === 'public' && (
+                      " 現在は公開されていますが、下書きにすると再公開には支払いが必要です。"
+                  )}
+                </p>
+              )}
           </div>
+            {canPublish && publishStatus === 'draft' && (
+               <p className="text-xs text-gray-500 pl-1">
+                  これをオンにすると、保存時に教室情報が公開されます。
+               </p>
+            )}
+            {canPublish && publishStatus === 'public' && (
+               <p className="text-xs text-gray-500 pl-1">
+                  これをオフにすると、保存時に教室情報は下書き（非公開）になります。
+               </p>
+            )}
+          </div>
+
+          <Separator />
+
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || !form.formState.isValid}
+            data-testid="submit-classroom-registration"
+            className="w-full bg-sky-600 hover:bg-sky-700 text-white text-lg py-3 rounded-lg transition duration-150 ease-in-out flex items-center justify-center"
+          >
+            {isSubmitting ? (
+              <>
+                <Clock className="mr-2 h-5 w-5 animate-spin" /> 送信中...
+              </>
+            ) : (
+              <>
+                <School className="mr-2 h-5 w-5" /> 
+                {publishStatus === 'public' ? (existingClassroom ? "更新して公開" : "登録して公開") : (existingClassroom ? "更新して下書き保存" : "登録して下書き保存")}
+              </>
+            )}
+          </Button>
         </form>
       </Form>
     </div>

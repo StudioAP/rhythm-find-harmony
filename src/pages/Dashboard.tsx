@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Building, CreditCard, Edit, Eye, EyeOff, LogOut, Settings, Trash, Calendar, RefreshCw, AlertCircle, CheckCircle, Home } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/providers/AuthProvider";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +32,7 @@ const Dashboard = () => {
   const [classroom, setClassroom] = useState<Classroom | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
-  const { user, signOut } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const { 
     subscription, 
     loading: subscriptionLoading,
@@ -45,10 +45,16 @@ const Dashboard = () => {
 
   // ログインチェック（認証状態確定後のみ）
   useEffect(() => {
-    if (!loading && !user) {
+    // user === null の場合はまだロード中として扱う
+    if (authLoading) {
+      return; // ローディング中は何もしない
+    }
+    
+    if (!user) {
+      // ローディング完了後にユーザーが null の場合のみリダイレクト
       navigate("/auth");
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
   // URLパラメータをチェックして決済結果を表示
   useEffect(() => {
@@ -119,10 +125,7 @@ const Dashboard = () => {
 
   const handleSignOut = async () => {
     try {
-      const { error } = await signOut();
-      if (error) {
-        throw error;
-      }
+      await signOut();
       
       toast({
         title: "ログアウト完了",
@@ -187,21 +190,21 @@ const Dashboard = () => {
     }
   };
 
-  // ローディング中
-  if (loading || subscriptionLoading) {
+  // ローディング中の表示
+  if (loading) {
     return (
-      <Layout showBreadcrumb={false}>
-        <div className="flex items-center justify-center min-h-96">
+      <Layout>
+        <div className="flex justify-center items-center min-h-[50vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>読み込み中...</p>
         </div>
       </div>
       </Layout>
     );
   }
 
-  // 未ログインの場合は何も表示しない（リダイレクト処理中）
+  // 認証されていない場合は何も表示しない（リダイレクト処理中）
   if (!user) {
     return null;
   }
@@ -229,13 +232,13 @@ const Dashboard = () => {
     if (!classroom) {
       return (
         <div className="space-y-4">
-          <Alert>
+          <Alert data-testid="alert-no-classroom">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               まず教室情報を登録してください（無料）
             </AlertDescription>
           </Alert>
-          <Button className="w-full" asChild>
+          <Button className="w-full" asChild data-testid="register-classroom-button">
             <Link to="/classroom/register">
               教室情報を登録する（無料）
             </Link>
@@ -248,27 +251,16 @@ const Dashboard = () => {
     if (classroom.draft_saved && !subscription.hasActiveSubscription) {
       return (
         <div className="space-y-4">
-          <Alert>
+          <Alert variant="default" data-testid="alert-payment-pending">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              教室情報は保存済みです。公開には月額500円の決済が必要です。
+              教室情報を公開するには、月額500円のサブスクリプション決済が必要です。
             </AlertDescription>
           </Alert>
-          <div className="space-y-2">
-            <Button 
-              className="flex items-center w-full" 
-              onClick={() => handleSubscription()}
-              disabled={subscriptionLoading}
-            >
-              <CreditCard className="mr-2 h-4 w-4" />
-              月額500円で掲載を開始する
-            </Button>
-            <Button variant="outline" className="w-full" asChild>
-              <Link to="/classroom/register">
-                下書きを編集する
-              </Link>
-            </Button>
-          </div>
+          <Button className="w-full" onClick={handleSubscription} data-testid="start-subscription-button">
+            <CreditCard className="mr-2 h-4 w-4" />
+            サブスクリプションを開始 (月額500円)
+          </Button>
         </div>
       );
     }

@@ -9,6 +9,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log("Customer Portal Function STarted - ABE TEST"); // ABE TEST
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -156,6 +157,7 @@ serve(async (req) => {
     });
     
   } catch (error) {
+    console.error("ERROR CATCH BLOCK - ABE TEST:", error); // ABE TEST
     console.error("Customer Portal作成エラー詳細:", error);
     const errorMessage = error instanceof Error ? error.message : "不明なエラー";
     

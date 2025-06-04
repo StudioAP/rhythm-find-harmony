@@ -12,8 +12,8 @@ export const useAuth = () => {
   useEffect(() => {
     if (isE2E) {
       // E2Eテストでは疑似ユーザーで認証済みとみなす
-      setUser({ id: 'user-id', email: 'teacher@example.com' } as User);
-      setSession({ access_token: 'token', refresh_token: 'token', user: { id: 'user-id', email: 'teacher@example.com' } } as Session);
+      setUser({ id: '550e8400-e29b-41d4-a716-446655440000', email: 'teacher@example.com' } as User);
+      setSession({ access_token: 'token', refresh_token: 'token', user: { id: '550e8400-e29b-41d4-a716-446655440000', email: 'teacher@example.com' } } as Session);
       setLoading(false);
       return;
     }

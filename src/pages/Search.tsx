@@ -149,13 +149,14 @@ const Search = () => {
                     handleSearch();
                   }
                 }}
+                data-testid="search-keyword-input"
               />
-              <Button onClick={handleSearch} size="default">
+              <Button onClick={handleSearch} size="default" data-testid="search-execute">
                 <SearchIcon className="h-4 w-4 mr-2" />
                 検索
-            </Button>
+              </Button>
+            </div>
           </div>
-        </div>
 
           {/* レッスンタイプ選択 */}
           <div>
@@ -174,6 +175,7 @@ const Search = () => {
                     );
                   }}
                   className="cursor-pointer"
+                  data-testid={`lesson-type-${type.id}`}
                 >
                   {translateLessonType(type.id)}
                 </Button>
@@ -187,7 +189,8 @@ const Search = () => {
               <select 
                 value={selectedPrefecture}
                 onChange={(e) => setSelectedPrefecture(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                data-testid="area-select"
               >
               <option value="">すべての都道府県</option>
               <option value="東京都">東京都</option>
@@ -220,6 +223,7 @@ const Search = () => {
                     );
                   }}
                   className="cursor-pointer"
+                  data-testid={`age-range-${group.id}`}
                 >
                   {translateAgeGroup(group.id)}
                 </Button>
@@ -244,6 +248,7 @@ const Search = () => {
                     );
                   }}
                   className="cursor-pointer"
+                  data-testid={`feature-${feature.id}`}
                 >
                   {translateFeature(feature.id)}
                 </Button>
@@ -278,23 +283,14 @@ const Search = () => {
           {/* 体験レッスン */}
           <div>
             <h3 className="text-lg font-medium mb-3">体験レッスン</h3>
-            <div className="flex gap-2">
-              <Button
-                variant={selectedTrialLesson === true ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedTrialLesson(selectedTrialLesson === true ? null : true)}
-                className="cursor-pointer"
-              >
-                体験レッスンあり
-              </Button>
-              <Button
-                variant={selectedTrialLesson === false ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedTrialLesson(selectedTrialLesson === false ? null : false)}
-                className="cursor-pointer"
-              >
-                体験レッスンなし
-              </Button>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="trial-lesson" 
+                checked={selectedTrialLesson === true}
+                onCheckedChange={(checked) => setSelectedTrialLesson(checked === true ? true : checked === false ? false : null)}
+                data-testid="trial-lesson-available"
+               />
+              <Label htmlFor="trial-lesson">体験レッスンあり</Label>
             </div>
           </div>
 
@@ -317,9 +313,9 @@ const Search = () => {
           <p>教室を検索中...</p>
             </div>
       ) : classrooms && classrooms.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="search-results">
               {classrooms.map((classroom) => (
-            <Card key={classroom.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Card key={classroom.id} className="hover:shadow-lg transition-shadow cursor-pointer" data-testid="classroom-card">
               <CardContent className="p-0">
                 {/* 画像表示部分 */}
                 <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
@@ -398,7 +394,7 @@ const Search = () => {
                     </Badge>
                   )}
                   
-                  <Button asChild className="w-full cursor-pointer">
+                  <Button asChild className="w-full cursor-pointer" data-testid={`classroom-card-link-${classroom.id}`}>
                     <Link to={`/classrooms/${classroom.id}`}>
                       詳細を見る
                     </Link>

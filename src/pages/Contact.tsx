@@ -96,6 +96,7 @@ const Contact = () => {
                     onChange={(e) => setName(e.target.value)}
                     placeholder="山田太郎"
                     required
+                    data-testid="contact-name"
                   />
                 </div>
 
@@ -108,6 +109,7 @@ const Contact = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="example@email.com"
                     required
+                    data-testid="contact-email"
                   />
                 </div>
 
@@ -120,6 +122,7 @@ const Contact = () => {
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder="お問い合わせの件名"
                     required
+                    data-testid="contact-subject"
                   />
                 </div>
 
@@ -132,10 +135,11 @@ const Contact = () => {
                     placeholder="お問い合わせ内容をご記入ください"
                     rows={6}
                     required
+                    data-testid="contact-message"
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button type="submit" className="w-full" disabled={isSubmitting} data-testid="contact-submit">
                   {isSubmitting ? "送信中..." : "お問い合わせを送信"}
                 </Button>
               </form>
