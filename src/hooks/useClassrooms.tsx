@@ -33,10 +33,18 @@ export const useClassrooms = (): UseClassroomsReturn => {
 
       // キーワード検索
       if (filters?.keyword && filters.keyword.trim() !== '') {
-        query = query.or(`name.ilike.%${filters.keyword}%,description.ilike.%${filters.keyword}%,area.ilike.%${filters.keyword}%`);
+        const keyword = filters.keyword.trim();
+        query = query.or(`name.ilike.%${keyword}%,description.ilike.%${keyword}%,area.ilike.%${keyword}%,address.ilike.%${keyword}%`);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      // レッスンタイプフィルター (サーバーサイドへ移行)
+      if (filters?.lessonTypes && filters.lessonTypes.length > 0) {
+        query = query.overlaps('lesson_types', filters.lessonTypes);
+      }
+
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .range(0, 49); // ページネーション追加
 
       if (error) {
         console.error('教室検索エラー:', error);
@@ -67,14 +75,15 @@ export const useClassrooms = (): UseClassroomsReturn => {
 
       // レッスンタイプフィルター
       let filteredData = validClassrooms;
-      if (filters?.lessonTypes && filters.lessonTypes.length > 0) {
-        filteredData = filteredData.filter(classroom => {
-          const lessonTypes = classroom.lesson_types || [];
-          return filters.lessonTypes?.some(lessonType => 
-            lessonTypes.includes(lessonType)
-          );
-        });
-      }
+      // クライアントサイドのレッスンタイプフィルターは削除
+      // if (filters?.lessonTypes && filters.lessonTypes.length > 0) {
+      //   filteredData = filteredData.filter(classroom => {
+      //     const lessonTypes = classroom.lesson_types || [];
+      //     return filters.lessonTypes?.some(lessonType => 
+      //       lessonTypes.includes(lessonType)
+      //     );
+      //   });
+      // }
 
       // 年齢グループフィルター
       if (filters?.ageGroups && filters.ageGroups.length > 0) {

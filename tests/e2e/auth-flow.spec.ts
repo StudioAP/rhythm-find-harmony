@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openDashboard } from './helpers/navigation';
 
 test.describe('Authentication Flow', () => {
   test.beforeEach(async ({ page, context }) => {
@@ -100,6 +101,17 @@ test.describe('Authentication Flow', () => {
     
     // ダッシュボードの主要な要素が表示されることを確認
     await expect(page.locator('h1').filter({ hasText: /教室管理ダッシュボード/ })).toBeVisible({ timeout: 10000 });
+
+    // トップページに一度戻る
+    await page.goto('/');
+    await page.waitForLoadState('networkidle'); // ページの読み込み完了を待つ
+
+    // ヘッダーの「ダッシュボード」リンクをクリックして再度ダッシュボードへ（ヘルパー関数を使用）
+    await openDashboard(page);
+
+    // 再度ダッシュボードの主要な要素が表示されることを確認
+    await expect(page.locator('h1').filter({ hasText: /教室管理ダッシュボード/ })).toBeVisible({ timeout: 10000 });
+    await expect(page).toHaveURL('/dashboard', { timeout: 20000 });
   });
 
   test('ログアウトフロー', async ({ page }) => {
