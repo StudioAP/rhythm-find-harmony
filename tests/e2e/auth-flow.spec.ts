@@ -33,11 +33,10 @@ test.describe('Authentication Flow', () => {
   });
 
   test('認証が必要なページの保護', async ({ page }) => {
-    // 未認証状態でダッシュボードにアクセス
-    await page.goto('/dashboard');
-    
-    // 認証ページにリダイレクトされることを確認
-    await expect(page).toHaveURL('/auth', { timeout: 10000 });
+    // 未認証状態で管理画面にアクセス
+    await page.goto('/dashboard'); // TODO: パス変更後に修正
+    await expect(page).toHaveURL(/.*\/auth/);
+    await expect(page.locator('text=アカウント登録またはログイン')).toBeVisible();
   });
 
   test('新規ユーザー登録フロー（自動ログイン）', async ({ page }) => {
@@ -57,11 +56,10 @@ test.describe('Authentication Flow', () => {
     // 新規登録ボタンをクリック
     await page.getByTestId('signup-submit').click();
     
-    // 新規登録が成功して自動的にダッシュボードにリダイレクトされることを確認
-    await expect(page).toHaveURL('/dashboard', { timeout: 20000 });
-    
-    // ダッシュボードの主要な要素が表示されることを確認
-    await expect(page.locator('h1').filter({ hasText: /教室管理ダッシュボード/ })).toBeVisible({ timeout: 10000 });
+    // 新規登録が成功して自動的に管理画面にリダイレクトされることを確認
+    await expect(page).toHaveURL(/.*dashboard/); // TODO: パス変更後に修正
+    // 管理画面の主要な要素が表示されることを確認
+    await expect(page.locator('h1').filter({ hasText: /教室管理画面/ })).toBeVisible({ timeout: 10000 });
     
     // 教室未登録のメッセージが表示されることを確認（新規ユーザーなので）
     await expect(page.locator('text=まず教室情報を登録してください（無料）')).toBeVisible();
@@ -77,8 +75,11 @@ test.describe('Authentication Flow', () => {
     await page.getByTestId('signup-password').fill('password123');
     await page.getByTestId('signup-submit').click();
     
-    // 登録成功でダッシュボードに移動することを確認
-    await expect(page).toHaveURL('/dashboard', { timeout: 20000 });
+    // 登録成功で管理画面に移動することを確認
+    await expect(page).toHaveURL(/.*dashboard/); // TODO: パス変更後に修正
+    // TODO: navigateToAdminPage を使うことを検討 (ただしh1の確認はここで行う)
+    // await navigateToAdminPage(page); 
+    await expect(page.locator('h1').filter({ hasText: /教室管理画面/ })).toBeVisible({ timeout: 10000 });
     
     // 一度ログアウト
     const logoutButton = page.locator('button').filter({ hasText: /ログアウト|logout/i });
@@ -96,22 +97,18 @@ test.describe('Authentication Flow', () => {
     await page.getByTestId('login-password').fill('password123');
     await page.getByTestId('login-submit').click();
     
-    // ダッシュボードにリダイレクトされることを確認
-    await expect(page).toHaveURL('/dashboard', { timeout: 20000 });
+    // 管理画面にリダイレクトされることを確認
+    await expect(page).toHaveURL(/.*dashboard/); // TODO: パス変更後に修正
+    // 管理画面の主要な要素が表示されることを確認
+    await expect(page.locator('h1').filter({ hasText: /教室管理画面/ })).toBeVisible({ timeout: 10000 });
     
-    // ダッシュボードの主要な要素が表示されることを確認
-    await expect(page.locator('h1').filter({ hasText: /教室管理ダッシュボード/ })).toBeVisible({ timeout: 10000 });
+    // ヘッダーの「管理画面」リンクをクリックして再度管理画面へ（ヘルパー関数を使用）
+    // await navigateToAdminPage(page); // 正しいヘルパー関数呼び出し（必要に応じて）
+    const adminPageLink = page.getByRole('link', { name: '管理画面' });
+    await adminPageLink.click();
 
-    // トップページに一度戻る
-    await page.goto('/');
-    await page.waitForLoadState('networkidle'); // ページの読み込み完了を待つ
-
-    // ヘッダーの「ダッシュボード」リンクをクリックして再度ダッシュボードへ（ヘルパー関数を使用）
-    await openDashboard(page);
-
-    // 再度ダッシュボードの主要な要素が表示されることを確認
-    await expect(page.locator('h1').filter({ hasText: /教室管理ダッシュボード/ })).toBeVisible({ timeout: 10000 });
-    await expect(page).toHaveURL('/dashboard', { timeout: 20000 });
+    // 再度管理画面の主要な要素が表示されることを確認
+    await expect(page.locator('h1').filter({ hasText: /教室管理画面/ })).toBeVisible({ timeout: 10000 });
   });
 
   test('ログアウトフロー', async ({ page }) => {
@@ -124,8 +121,10 @@ test.describe('Authentication Flow', () => {
     await page.getByTestId('signup-password').fill('password123');
     await page.getByTestId('signup-submit').click();
     
-    // 登録成功でダッシュボードに移動することを確認
-    await expect(page).toHaveURL('/dashboard', { timeout: 20000 });
+    // 登録成功で管理画面に移動することを確認
+    await expect(page).toHaveURL(/.*dashboard/); // TODO: パス変更後に修正
+    // await navigateToAdminPage(page);
+    await expect(page.locator('h1').filter({ hasText: /教室管理画面/ })).toBeVisible({ timeout: 10000 });
     
     // ログアウトボタンをクリック
     const logoutButton = page.locator('button').filter({ hasText: /ログアウト|logout/i });

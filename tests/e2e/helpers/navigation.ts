@@ -1,5 +1,14 @@
 import { Page, expect } from '@playwright/test';
 
+const adminPageLink = (page: Page) => page.getByRole('link', { name: '管理画面' });
+
+export const navigateToAdminPage = async (page: Page) => {
+  await adminPageLink(page).click();
+  // 完全にレンダリングされるまで待機
+  await expect(page).toHaveURL(/.*dashboard/); // TODO: パス変更後に修正
+  await expect(page.locator('h1')).toBeVisible(); 
+};
+
 export async function openDashboard(page: Page) {
   const dash = () => page.getByRole('link', { name: 'ダッシュボード' });
 

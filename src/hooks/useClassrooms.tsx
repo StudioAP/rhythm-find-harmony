@@ -54,10 +54,10 @@ export const useClassrooms = (): UseClassroomsReturn => {
       // 型安全な変換
       const classroomsData = (data || []);
       
-      // 本番仕様：各教室のサブスクリプション情報を個別取得して結合
+      // 各教室のご契約情報を個別に取得して結合
       const classroomsWithSubscriptions: ClassroomWithSubscriptions[] = await Promise.all(
         classroomsData.map(async (classroom) => {
-          // 教室所有者のサブスクリプション情報を取得
+          // 教室所有者のご契約情報を取得
           const { data: subscriptionsData } = await supabase
             .from('subscriptions')
             .select('status, current_period_end')
@@ -170,7 +170,7 @@ export const useClassrooms = (): UseClassroomsReturn => {
       
       if (!data) return null;
       
-      // 教室所有者のサブスクリプション情報を取得
+      // 教室所有者のご契約情報を取得
       const { data: subscriptionsData } = await supabase
         .from('subscriptions')
         .select('status, current_period_end')
@@ -221,7 +221,7 @@ export const useClassrooms = (): UseClassroomsReturn => {
         return null;
       }
       
-      // 教室所有者のサブスクリプション情報を取得
+      // 教室所有者のご契約情報を取得
       const { data: subscriptionsData } = await supabase
         .from('subscriptions')
         .select('status, current_period_end')

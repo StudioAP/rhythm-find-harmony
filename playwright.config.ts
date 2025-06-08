@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * ピアノ教室・リトミック教室検索.com
+ * ピアノ教室・リトミック教室検索.org
  * 本格公開前テスト設定
  */
 export default defineConfig({

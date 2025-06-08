@@ -48,7 +48,7 @@ const PageBreadcrumb = ({ items, className }: PageBreadcrumbProps) => {
     if (path.startsWith("/dashboard")) {
       return [
         { label: "ホーム", href: "/" },
-        { label: "管理ダッシュボード" }
+        { label: "管理画面" }
       ];
     }
     

@@ -43,17 +43,23 @@ const AuthCallback = () => {
 
           if (session) {
             toast({
-              title: "メール確認完了",
-              description: "アカウントが有効化されました。ダッシュボードに移動します。",
+              title: "アカウント有効化完了",
+              description: "アカウントが有効化されました。管理画面に移動します。",
+              variant: "default",
             });
-            navigate("/dashboard");
+            // 少し待ってから管理画面に移動
+            setTimeout(() => {
+              navigate("/dashboard"); // TODO: ここも /admin などに変更するか確認
+            }, 2000);
           } else {
             toast({
               title: "認証状態確認中",
               description: "しばらくお待ちください...",
             });
-            // 少し待ってからダッシュボードに移動
-            setTimeout(() => navigate("/dashboard"), 2000);
+            // 少し待ってから管理画面に移動
+            setTimeout(() => {
+              navigate("/dashboard"); // TODO: ここも /admin などに変更するか確認
+            }, 2000);
           }
         } else {
           // アクセストークンがない場合は認証ページに戻る

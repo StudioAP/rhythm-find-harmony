@@ -19,7 +19,7 @@
 | **Port** | `587` | ✅ 正しい |
 | **Username** | `resend` | ✅ 正しい |
 | **Password** | `re_JB4VwPjw_Fi9RfT5J9B5kyA4iV25wA8cc` | ✅ 有効なAPIキー |
-| **Sender Name** | `ピアノ教室・リトミック教室検索.com` | ✅ 設定済み |
+| **Sender Name** | `ピアノ教室・リトミック教室検索.org` | ✅ 設定済み |
 | **Sender Email** | `info@piaryth.org` | ✅ 認証済みドメイン |
 
 **重要**: 設定保存は確実に実行済み
@@ -133,7 +133,7 @@ Time difference: 10ms（新規ユーザー確認）
 ### **✅ 完了済み修正**
 1. **API Key設定**: 以前は未設定 → 現在は正しく設定済み
 2. **Sender Email**: `no-reply@pianosearch.com` → `info@piaryth.org`
-3. **Sender Name**: `Piano Search` → `ピアノ教室・リトミック教室検索.com`
+3. **Sender Name**: `Piano Search` → `ピアノ教室・リトミック教室検索.org`
 4. **設定保存**: 複数回実行・確認済み
 
 ### **✅ 検証済み事項**

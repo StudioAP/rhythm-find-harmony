@@ -51,7 +51,7 @@ export const useSubscription = () => {
         can_publish: false
       };
 
-      // サブスクリプション詳細情報も取得
+      // ご契約プランの詳細情報も取得
       const { data: subscriptionData } = await supabase
         .from('subscriptions')
         .select('plan_type')
@@ -71,16 +71,16 @@ export const useSubscription = () => {
       if (showToast) {
         toast({
           title: "更新完了",
-          description: "サブスクリプション状態を更新しました",
+          description: "ご契約情報を更新しました",
         });
       }
     } catch (error) {
-      console.error('サブスクリプション状態の確認エラー:', error);
+      console.error('ご契約情報の確認エラー:', error);
       
       if (showToast) {
         toast({
           title: "エラー",
-          description: "サブスクリプション状態の更新に失敗しました",
+          description: "ご契約情報の更新に失敗しました",
           variant: "destructive",
         });
       }

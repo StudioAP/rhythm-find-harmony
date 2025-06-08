@@ -20,7 +20,7 @@ Call log:
 - region "Notifications (F8)":
   - list
 - banner:
-  - link "ピアノ教室・リトミック教室検索.com":
+  - link "ピアノ教室・リトミック教室検索.org":
     - /url: /
   - link "ログイン":
     - /url: /auth
@@ -55,11 +55,11 @@ Call log:
   - link "特徴で探す":
     - /url: /search?type=feature
   - heading "教室を運営されている方へ" [level=2]
-  - paragraph: あなたの教室をピアノ教室・リトミック教室検索.comに掲載しませんか？ 月額たった500円で、新しい生徒との出会いをサポートします
+  - paragraph: あなたの教室をピアノ教室・リトミック教室検索.orgに掲載しませんか？ 月額たった500円で、新しい生徒との出会いをサポートします
   - link "教室情報を掲載する":
     - /url: /classroom/register
 - contentinfo:
-  - paragraph: © 2025 ピアノ教室・リトミック教室検索.com All rights reserved.
+  - paragraph: © 2025 ピアノ教室・リトミック教室検索.org All rights reserved.
   - link "About":
     - /url: /about
   - link "利用規約":

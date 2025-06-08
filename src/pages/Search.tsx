@@ -192,19 +192,13 @@ const Search = () => {
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                 data-testid="area-select"
               >
-              <option value="">すべての都道府県</option>
-              <option value="東京都">東京都</option>
-              <option value="神奈川県">神奈川県</option>
-              <option value="千葉県">千葉県</option>
-              <option value="埼玉県">埼玉県</option>
-              <option value="大阪府">大阪府</option>
-              <option value="愛知県">愛知県</option>
-              <option value="福岡県">福岡県</option>
-              <option value="北海道">北海道</option>
-              <option value="宮城県">宮城県</option>
-              <option value="広島県">広島県</option>
-              </select>
-            </div>
+              {prefectures.map((pref) => (
+                <option key={pref} value={pref}>
+                  {pref === "" ? "すべての都道府県" : pref}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* 対象年齢選択 */}
           <div>

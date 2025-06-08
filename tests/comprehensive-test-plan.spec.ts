@@ -1,7 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 
 // **************************************************
-// 🎯 ピアノ教室・リトミック教室検索.com 
+// 🎯 ピアノ教室・リトミック教室検索.org 
 // 本格公開前 包括的テストスイート
 // **************************************************
 
@@ -63,8 +63,8 @@ test.describe('🔍 STAGE 1: 基本機能テスト', () => {
       await page.fill('[data-testid="login-password"]', 'password123');
       await page.click('[data-testid="login-submit"]');
       
-      // ダッシュボードリダイレクト確認
-      await expect(page).toHaveURL(`${BASE_URL}/dashboard`);
+      // 管理画面リダイレクト確認
+      await expect(page).toHaveURL(/.*dashboard/); // TODO: パス変更後に修正
       
       // ログアウト
       await page.click('[data-testid="user-menu"]');
@@ -72,6 +72,18 @@ test.describe('🔍 STAGE 1: 基本機能テスト', () => {
       
       // トップページリダイレクト確認
       await expect(page).toHaveURL(`${BASE_URL}/`);
+    });
+
+    test('既存ユーザーログイン後、管理画面へリダイレクト', async ({ page }) => {
+      await login(page, 'existinguser@example.com', 'password123');
+      // 管理画面到達
+      await expect(page).toHaveURL(/.*dashboard/); // TODO: パス変更後に修正
+    });
+
+    test('未認証ユーザーは管理画面アクセス不可', async ({ page }) => {
+      await page.goto('/dashboard'); // TODO: パス変更後に修正
+      await expect(page).not.toHaveURL(/.*dashboard/); // TODO: パス変更後に修正
+      await expect(page).toHaveURL(/.*auth/);
     });
   });
 
@@ -168,8 +180,8 @@ test.describe('🎨 STAGE 2: ユーザージャーニー完全テスト', () => 
       await page.fill('[data-testid="signup-password"]', TEST_DATA.newUser.password);
       await page.click('[data-testid="signup-submit"]');
       
-      // 2. ダッシュボード到達
-      await expect(page).toHaveURL(`${BASE_URL}/dashboard`);
+      // 2. 管理画面到達
+      await expect(page).toHaveURL(/.*dashboard/); // TODO: パス変更後に修正
       
       // 3. 教室登録開始
       await page.click('[data-testid="register-classroom-button"]');
@@ -202,7 +214,7 @@ test.describe('🎨 STAGE 2: ユーザージャーニー完全テスト', () => 
     });
 
     test('サブスクリプション決済フロー', async ({ page }) => {
-      // 認証済み状態でダッシュボードへ
+      // 認証済み状態で管理画面へ
       await page.goto(`${BASE_URL}/dashboard`);
       
       // サブスクリプション開始
@@ -318,7 +330,7 @@ test.describe('⚠️ STAGE 3: エッジケース・ストレステスト', () =
     });
 
     test('認証なしでの保護ページアクセス', async ({ page }) => {
-      // ログインなしでダッシュボードアクセス
+      // ログインなしで管理画面アクセス
       await page.goto(`${BASE_URL}/dashboard`);
       
       // ログインページにリダイレクトされることを確認

@@ -1,5 +1,5 @@
+-- 管理画面で使用される重要な関数
 -- サブスクリプション状態確認関数を作成
--- ダッシュボードで使用される重要な関数
 
 CREATE OR REPLACE FUNCTION check_user_subscription_status(user_uuid UUID)
 RETURNS TABLE (

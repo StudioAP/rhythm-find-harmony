@@ -102,8 +102,8 @@ export const shouldShowClassroom = (classroom: ClassroomWithSubscriptions): bool
  */
 export const SUBSCRIPTION_ERROR_MESSAGES = {
   NO_SUBSCRIPTION: 'この機能を利用するには有料プランの契約が必要です。',
-  EXPIRED_SUBSCRIPTION: 'サブスクリプションの有効期限が切れています。有料プランを更新してください。',
-  INACTIVE_SUBSCRIPTION: 'サブスクリプションがアクティブではありません。サポートまでお問い合わせください。',
+  EXPIRED_SUBSCRIPTION: '月額プランの有効期限が切れています。お手数ですが、再度お手続きをお願いいたします。',
+  INACTIVE_SUBSCRIPTION: '月額プランが現在ご利用いただけない状態です。お手数ですが、サポートまでお問い合わせください。',
   GENERAL_ERROR: '教室情報の取得に失敗しました。しばらく時間をおいて再度お試しください。'
 } as const;
 

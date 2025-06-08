@@ -16,7 +16,9 @@ import {
   Info,
   Star,
   Eye,
-  EyeOff
+  EyeOff,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 
 import { useAuth } from "@/providers/AuthProvider";
@@ -37,7 +39,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { InputWithCounter } from "@/components/ui/input-with-counter";
 import { Textarea } from "@/components/ui/textarea";
+import { TextareaWithCounter } from "@/components/ui/textarea-with-counter";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
@@ -65,32 +69,72 @@ const prefectures = [
   "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
 ];
 
+// 文字数制限の定数定義
+const FIELD_LIMITS = {
+  name: 50,           // 教室名：一般的な店舗名・サービス名
+  description: 1000,   // 教室の説明：詳細な紹介文
+  city: 50,           // 市区町村：地名
+  address: 100,       // 番地・建物名など：住所詳細
+  phone: 20,          // 電話番号：ハイフン含む
+  email: 100,         // メールアドレス：一般的な制限
+  website_url: 200,   // ウェブサイトURL：長いURLにも対応
+  available_times: 200, // レッスン時間帯：複数時間帯記述
+  price_range: 300,   // 料金目安：複数コース記述
+  instructor_info: 800, // 講師紹介：経歴・実績等
+  pr_points: 800,     // PRポイント：アピールポイント
+} as const;
+
 // フォームのバリデーションスキーマ
 const formSchema = z.object({
-  name: z.string().min(1, { message: "教室名を入力してください" }),
-  description: z.string().min(10, { message: "最低10文字以上の説明文を入力してください" }),
-  prefecture: z.string({ required_error: "都道府県を選択してください" }),
-  city: z.string().min(1, { message: "市区町村を入力してください" }),
-  address: z.string().min(1, { message: "住所を入力してください" }),
-  phone: z.string().optional(),
-  email: z.string().email({ message: "有効なメールアドレスを入力してください" }),
-  website_url: z.string().url({ message: "有効なURLを入力してください" }).optional(),
-  lesson_types: z.array(z.string()).min(1, { message: "少なくとも1つのレッスンタイプを選択してください" }),
-  target_ages: z.array(z.string()).min(1, { message: "少なくとも1つの対象年齢を選択してください" }),
-  available_days: z.array(z.string()).min(1, { message: "少なくとも1つの曜日を選択してください" }),
-  available_times: z.string().optional(),
-  price_range: z.string().min(1, { message: "料金目安を入力してください" }),
-  instructor_info: z.string().optional(),
-  pr_points: z.string().optional(),
+  name: z.string()
+    .min(1, { message: "教室名を入力してください。" })
+    .max(FIELD_LIMITS.name, { message: `教室名は${FIELD_LIMITS.name}文字以内で入力してください。` }),
+  description: z.string()
+    .min(10, { message: "教室の魅力が伝わるよう、最低10文字以上でご記入ください。" })
+    .max(FIELD_LIMITS.description, { message: `教室の説明は${FIELD_LIMITS.description}文字以内で入力してください。` }),
+  prefecture: z.string({ required_error: "都道府県を選択してください。" }),
+  city: z.string()
+    .min(1, { message: "市区町村名を入力してください。例：新宿区" })
+    .max(FIELD_LIMITS.city, { message: `市区町村名は${FIELD_LIMITS.city}文字以内で入力してください。` }),
+  address: z.string()
+    .max(FIELD_LIMITS.address, { message: `番地・建物名は${FIELD_LIMITS.address}文字以内で入力してください。` })
+    .optional(),
+  phone: z.string()
+    .max(FIELD_LIMITS.phone, { message: `電話番号は${FIELD_LIMITS.phone}文字以内で入力してください。` })
+    .optional(),
+  email: z.string()
+    .email({ message: "有効なメールアドレスの形式で入力してください。例：info@example.com" })
+    .max(FIELD_LIMITS.email, { message: `メールアドレスは${FIELD_LIMITS.email}文字以内で入力してください。` }),
+  website_url: z.string()
+    .url({ message: "有効なURLの形式で入力してください。例：https://example.com" })
+    .max(FIELD_LIMITS.website_url, { message: `ウェブサイトURLは${FIELD_LIMITS.website_url}文字以内で入力してください。` })
+    .optional(),
+  lesson_types: z.array(z.string()).min(1, { message: "レッスン種類を少なくとも1つ選択してください。" }),
+  target_ages: z.array(z.string()).min(1, { message: "対象年齢を少なくとも1つ選択してください。" }),
+  available_days: z.array(z.string()).min(1, { message: "レッスン可能曜日を少なくとも1つ選択してください。" }),
+  available_times: z.string()
+    .max(FIELD_LIMITS.available_times, { message: `レッスン時間帯は${FIELD_LIMITS.available_times}文字以内で入力してください。` })
+    .optional(),
+  price_range: z.string()
+    .min(1, { message: "料金目安を入力してください。例：月謝8,000円～" })
+    .max(FIELD_LIMITS.price_range, { message: `料金目安は${FIELD_LIMITS.price_range}文字以内で入力してください。` }),
+  instructor_info: z.string()
+    .max(FIELD_LIMITS.instructor_info, { message: `講師紹介は${FIELD_LIMITS.instructor_info}文字以内で入力してください。` })
+    .optional(),
+  pr_points: z.string()
+    .max(FIELD_LIMITS.pr_points, { message: `PRポイントは${FIELD_LIMITS.pr_points}文字以内で入力してください。` })
+    .optional(),
 });
 
 type ClassroomFormValues = z.infer<typeof formSchema>;
 
 // existingClassroom state がDBの published 状態を保持できるように型を拡張
 interface ExtendedClassroomFormValues extends ClassroomFormValues {
+  id?: string; // id をオプショナルで追加
   publishedDbState?: boolean; // DBから読み込んだ実際の公開状態
   thumbnail_url?: string | null; // DBから読み込んだサムネイルURL
   image_urls?: string[] | null; // DBから読み込んだ画像URLリスト
+  last_draft_saved_at?: string | null; // last_draft_saved_at をオプショナルで追加
 }
 
 // 型定義の追加
@@ -138,10 +182,8 @@ const ClassroomRegistration = () => {
   const { user, loading: authLoading } = useAuth();
   const { subscription, loading: subscriptionLoading, refreshSubscriptionStatus } = useSubscription();
   const navigate = useNavigate();
-  console.log('🔧 navigate function:', typeof navigate, navigate);
-  console.log('👤 Current user from AuthProvider:', user);
 
-  // 支払い状況と既存データに基づいて公開ステータスを初期化
+  // 支払い状況と既存データに基づいて、公開するかどうかの初期値を設定します
   useEffect(() => {
     if (authLoading || subscriptionLoading || loading) {
       return;
@@ -228,8 +270,9 @@ const ClassroomRegistration = () => {
         }
 
         if (data) {
-          const prefecture = (data.area && typeof data.area === 'string' && data.area.includes(' ')) ? data.area.split(' ')[0] : (data.area && typeof data.area === 'string' ? data.area : "");
-          const city = (data.area && typeof data.area === 'string' && data.area.includes(' ')) ? data.area.split(' ').slice(1).join(' ') : "";
+          const dbData = data as DatabaseClassroom;
+          const prefecture = (dbData.area && typeof dbData.area === 'string' && dbData.area.includes(' ')) ? dbData.area.split(' ')[0] : (dbData.area && typeof dbData.area === 'string' ? dbData.area : "");
+          const city = (dbData.area && typeof dbData.area === 'string' && dbData.area.includes(' ')) ? dbData.area.split(' ').slice(1).join(' ') : "";
           
           const parseStringToArray = (value: unknown): string[] => {
             if (Array.isArray(value)) return value.filter(s => typeof s === 'string');
@@ -239,53 +282,46 @@ const ClassroomRegistration = () => {
             return [];
           };
 
-          const lessonTypes = parseStringToArray(data.lesson_types);
-          const targetAges = parseStringToArray(data.age_range);
-          const availableDays = parseStringToArray(data.available_days);
+          const lessonTypes = parseStringToArray(dbData.lesson_types);
+          const targetAges = parseStringToArray(dbData.age_range);
+          const availableDays = parseStringToArray(dbData.available_days);
           
-          const formData: ClassroomFormValues = {
-            name: data.name || "",
-            description: data.description || "",
+          const formData: ExtendedClassroomFormValues = {
+            name: dbData.name || "",
+            description: dbData.description || "",
             prefecture: prefecture,
             city: city,
-            address: data.address || "",
-            phone: data.phone || "",
-            email: data.email || "",
-            website_url: data.website_url || "",
+            address: dbData.address || "",
+            phone: dbData.phone || "",
+            email: dbData.email || "",
+            website_url: dbData.website_url || "",
             lesson_types: lessonTypes,
             target_ages: targetAges,
             available_days: availableDays,
-            available_times: data.available_times || "",
-            price_range: data.price_range || "",
-            instructor_info: data.instructor_info || "",
-            pr_points: data.pr_points || "",
+            available_times: dbData.available_times || "",
+            price_range: dbData.price_range || "",
+            instructor_info: dbData.instructor_info || "",
+            pr_points: dbData.pr_points || "",
+            publishedDbState: dbData.published,
+            thumbnail_url: dbData.thumbnail_url,
+            image_urls: dbData.image_urls,
+            last_draft_saved_at: dbData.last_draft_saved_at,
           };
-
-          setExistingClassroom({ 
-            ...formData, 
-            publishedDbState: data.published,
-            thumbnail_url: data.thumbnail_url,
-            image_urls: data.image_urls
-          });
-          
           form.reset(formData);
-
-          if (data.image_urls && Array.isArray(data.image_urls)) {
-            setExistingImageUrls(data.image_urls);
-            if (data.thumbnail_url && data.image_urls.includes(data.thumbnail_url)) {
-                setThumbnailIndex(data.image_urls.indexOf(data.thumbnail_url));
-            } else if (data.image_urls.length > 0) {
-                setThumbnailIndex(0);
-            }
-              } else {
-            setExistingImageUrls([]);
-                setThumbnailIndex(0);
+          setExistingClassroom(formData);
+          if (dbData.image_urls) {
+            setExistingImageUrls(dbData.image_urls);
+          }
+          if (dbData.thumbnail_url && dbData.image_urls) {
+            const thumbIndex = dbData.image_urls.findIndex(url => url === dbData.thumbnail_url);
+            if (thumbIndex !== -1) {
+              setThumbnailIndex(thumbIndex);
               }
-          toast({ title: "下書き読み込み完了", description: "以前保存したデータを読み込みました。" });
+          }
         }
-      } catch (error) {
-        console.error("下書きデータ読み込み中に予期せぬエラー:", error);
-        toast({ title: "エラー", description: "データの読み込み中に問題が発生しました。", variant: "destructive" });
+      } catch (err) {
+        console.error("下書きデータ処理エラー:", err);
+        toast({ title: "エラー", description: "データの処理中にエラーが発生しました。", variant: "destructive" });
       } finally {
         setLoading(false);
       }
@@ -298,545 +334,547 @@ const ClassroomRegistration = () => {
     }
   }, [user, form]);
 
-  const uploadFileToSupabase = async (file: File, userId: string): Promise<string | null> => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`;
-      const bucketName = 'classrooms';
-      const filePath = `${userId}/${fileName}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from(bucketName)
-        .upload(filePath, file, { cacheControl: '3600', upsert: false });
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        toast({title: "画像アップロードエラー", description: `ファイル名: ${file.name} - ${uploadError.message}`, variant: "destructive"});
-        return null;
+  const MAX_IMAGES = 6;
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const newFiles = Array.from(event.target.files);
+      const totalImages = images.length + existingImageUrls.length + newFiles.length;
+      if (totalImages > MAX_IMAGES) {
+        toast({
+          title: "画像上限エラー",
+          description: `画像は合計${MAX_IMAGES}枚までアップロードできます。`,
+          variant: "destructive",
+        });
+        return;
       }
-      if (!uploadData || !uploadData.path) {
-        console.error('Storage upload error: No path returned');
-        toast({title: "画像アップロードエラー", description: `ファイル名: ${file.name} - パス取得失敗`, variant: "destructive"});
-        return null;
-      }
-      const { data: urlData } = supabase.storage.from(bucketName).getPublicUrl(uploadData.path);
-      return urlData.publicUrl;
-    } catch (e) {
-      console.error('File upload failed unexpectedly:', e);
-      let desc = "予期せぬエラーが発生しました。";
-      if (e instanceof Error) desc = e.message;
-      toast({title: "画像アップロード例外", description: desc, variant: "destructive"});
-      return null;
+      setImages(prev => [...prev, ...newFiles]);
+      // 新しいファイルに対してObjectURLを生成してキャッシュ
+      newFiles.forEach(file => {
+        const url = URL.createObjectURL(file);
+        objectUrlsRef.current.set(file, url);
+      });
     }
   };
 
-  // 統合された画像リストの取得 (JSX表示用)
+  const uploadFileToSupabase = async (file: File, userId: string): Promise<string | null> => {
+      const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}/${Date.now()}.${fileExt}`;
+    const { data, error } = await supabase.storage
+      .from('classroom-images')
+      .upload(fileName, file, { upsert: true });
+
+    if (error) {
+      console.error('Supabaseへのファイルアップロードエラー:', error);
+      toast({ title: "アップロードエラー", description: error.message, variant: "destructive" });
+        return null;
+      }
+    // 公開URLを取得
+    const { data: publicUrlData } = supabase.storage.from('classroom-images').getPublicUrl(data.path);
+    return publicUrlData.publicUrl;
+  };
+
   const getAllImages = (): (string | File)[] => {
     return [...existingImageUrls, ...images];
   };
       
-  // 画像表示のためのURL取得（メモリリーク防止対応済み）
   const getImageUrl = (index: number): string => {
-    const totalExistingImages = existingImageUrls.length;
-    if (index < 0 || index >= getAllImages().length) {
-      console.error(`getImageUrl: Invalid image index ${index}`);
-      return ""; // Return a placeholder or empty string
+    const allImages = getAllImages();
+    const item = allImages[index];
+    if (typeof item === 'string') {
+      return item; // 既存のURL
     }
-    
-    if (index < totalExistingImages) {
-      return existingImageUrls[index];
-    } else {
-      const file = images[index - totalExistingImages];
-      if (!(file instanceof File)) {
-        console.error(`getImageUrl: Invalid file object at new image index ${index - totalExistingImages}`);
-        return "";
-      }
-      if (!objectUrlsRef.current.has(file)) {
-        const url = URL.createObjectURL(file);
-        objectUrlsRef.current.set(file, url);
-      }
-      return objectUrlsRef.current.get(file)!;
-    }
+    // キャッシュされたObjectURLを使用
+    return objectUrlsRef.current.get(item) || ""; 
   };
 
-  const handleRemoveImage = (indexToRemove: number) => { // 'type' argument removed as it's implicit
-    const totalExistingImages = existingImageUrls.length;
-    const totalImages = getAllImages().length;
-    
-    if (indexToRemove < 0 || indexToRemove >= totalImages) {
-      console.error(`handleRemoveImage: Invalid image index: ${indexToRemove}`);
-      toast({ title: "エラー", description: "無効な画像インデックスです", variant: "destructive" });
-      return;
-    }
-    
-    try {
-      if (indexToRemove < totalExistingImages) {
-        setExistingImageUrls(prev => prev.filter((_, i) => i !== indexToRemove));
+  const handleRemoveImage = (indexToRemove: number) => {
+    const allImages = getAllImages();
+    const itemToRemove = allImages[indexToRemove];
+
+    if (typeof itemToRemove === 'string') {
+      // 既存の画像を削除リストに追加（実際の削除はonSubmit時）
+      setExistingImageUrls(prev => prev.filter(url => url !== itemToRemove));
+      // もし削除されたのがサムネイルなら、サムネイルインデックスをリセット
+      if (indexToRemove === thumbnailIndex && existingImageUrls.length > 1) {
+        setThumbnailIndex(0); 
+      } else if (existingImageUrls.length <=1 && images.length === 0) {
+        setThumbnailIndex(0);
+      }
       } else {
-        const newImageIndex = indexToRemove - totalExistingImages;
-        const fileToRemove = images[newImageIndex];
-        if (objectUrlsRef.current.has(fileToRemove)) {
-          URL.revokeObjectURL(objectUrlsRef.current.get(fileToRemove)!);
-          objectUrlsRef.current.delete(fileToRemove);
+      // 新しく追加された画像を削除
+      const newImages = images.filter((_, i) => {
+        // existingImageUrls.length をオフセットとして考慮
+        return (existingImageUrls.length + i) !== indexToRemove;
+      });
+      setImages(newImages);
+      // ObjectURLを解放
+      const objectUrl = objectUrlsRef.current.get(itemToRemove);
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+        objectUrlsRef.current.delete(itemToRemove);
         }
-        setImages(prev => prev.filter((_, i) => i !== newImageIndex));
+       // もし削除されたのがサムネイルなら、サムネイルインデックスをリセット
+       if (indexToRemove === thumbnailIndex && getAllImages().length > 1) {
+        setThumbnailIndex(0); 
+      } else if (getAllImages().length <= 1) {
+        setThumbnailIndex(0);
       }
-      
-      if (thumbnailIndex === indexToRemove) {
-        setThumbnailIndex(totalImages - 1 > 0 ? 0 : 0);
-      } else if (thumbnailIndex > indexToRemove) {
-        setThumbnailIndex(prev => Math.max(0, prev - 1));
-      }
-      if (totalImages === 1) { // If the last image was removed
-        setThumbnailIndex(0); // Reset thumbnail index
-      }
-    } catch (error) {
-      console.error('Image removal error:', error);
-      toast({ title: "エラー", description: "画像の削除に失敗しました", variant: "destructive" });
     }
   };
 
   const handleThumbnailSelect = (index: number) => {
-    const totalImages = getAllImages().length;
-    if (index >= 0 && index < totalImages) {
       setThumbnailIndex(index);
-    } else {
-      console.warn('handleThumbnailSelect: Invalid index ' + index + ' for ' + totalImages + ' images.');
-    }
   };
   
   const onSubmit = async (data: ClassroomFormValues) => {
     if (!user) {
-      toast({ title: "エラー", description: "ログインが必要です", variant: "destructive" });
+      toast({ title: "エラー", description: "ユーザー情報が見つかりません。", variant: "destructive" });
       return;
     }
 
+    // 公開を選択していて、月額プランが有効でない場合は警告
     if (publishStatus === 'public' && !(subscription && subscription.hasActiveSubscription)) {
       toast({
-        title: "公開できません",
-        description: "教室情報を公開するには、料金プランへのお支払いが必要です。",
+        title: "公開設定について",
+        description: "教室を「公開する」に設定するには、有効な月額プランのご契約が必要です。「下書きとして保存する」か、管理画面で月額プランをご契約ください。",
+        variant: "default",
+        duration: 7000,
       });
-      return;
+      return; // ここで処理を中断し、ユーザーにプラン契約を促す
     }
 
     setIsSubmitting(true);
-    console.log("フォーム送信データ:", data);
-    console.log("選択された公開ステータス:", publishStatus);
 
     try {
-      let newUploadedUrls: string[] = [];
-      if (images.length > 0) {
-        const uploadPromises: Promise<string | null>[] = images.map(file => uploadFileToSupabase(file, user.id)); 
-        const newlyUploadedNullable = await Promise.all(uploadPromises);
-        newUploadedUrls = newlyUploadedNullable.filter(url => url !== null) as string[];
-      }
-      
-      const finalImageUrls = [...existingImageUrls, ...newUploadedUrls]; 
-      let currentThumbnailUrl: string | null = existingClassroom?.thumbnail_url || null;
-      
-      if (finalImageUrls.length > 0) {
-        if (thumbnailIndex < existingImageUrls.length) {
-          currentThumbnailUrl = existingImageUrls[thumbnailIndex];
-      } else {
-          const newImageBaseIndex = existingImageUrls.length;
-          const newImageSelectionIndex = thumbnailIndex - newImageBaseIndex;
-          if (newImageSelectionIndex >= 0 && newImageSelectionIndex < newUploadedUrls.length) {
-            currentThumbnailUrl = newUploadedUrls[newImageSelectionIndex];
-          } else {
-            currentThumbnailUrl = finalImageUrls[0]; 
-      }
-    }
-      } else { currentThumbnailUrl = null; }
+      const imageUploadPromises: Promise<string | null>[] = [];
+      const uploadedImageUrls: string[] = [];
 
+      // 新しい画像をアップロード
+      images.forEach(file => {
+        imageUploadPromises.push(uploadFileToSupabase(file, user.id));
+      });
+      const newImageResults = await Promise.all(imageUploadPromises);
+      newImageResults.forEach(url => {
+        if (url) uploadedImageUrls.push(url);
+      });
+
+      // 既存の画像URLと新しい画像URLを結合
+      const allImageUrls = [...existingImageUrls, ...uploadedImageUrls];
+      const newThumbnailUrl = allImageUrls[thumbnailIndex] || null;
+
+      // DBのclassroomsテーブルのスキーマに合わせてオブジェクトを構築
       const classroomDataToSave = {
         user_id: user.id,
         name: data.name,
         description: data.description,
-        area: `${data.prefecture} ${data.city}`,
-        address: data.address,
+        area: `${data.prefecture} ${data.city}`.trim(),
+        address: data.address || null,
         phone: data.phone || null,
         email: data.email,
         website_url: data.website_url || null,
-        lesson_types: data.lesson_types,
-        age_range: data.target_ages.join(', '),
-        image_urls: finalImageUrls.length > 0 ? finalImageUrls : null,
-        thumbnail_url: currentThumbnailUrl,
-        available_days: data.available_days,
+        lesson_types: data.lesson_types, // string[] (DBがtext[]型と想定)
+        age_range: data.target_ages.join(','), // string (DBがtext型でカンマ区切りと想定)
+        available_days: data.available_days, // string[] (DBがtext[]型と想定)
         available_times: data.available_times || null,
         price_range: data.price_range,
         instructor_info: data.instructor_info || null,
         pr_points: data.pr_points || null,
-        published: publishStatus === 'public',
-        draft_saved: publishStatus === 'draft',
+        image_urls: allImageUrls.length > 0 ? allImageUrls : null,
+        thumbnail_url: newThumbnailUrl,
+        published: publishStatus === 'public' && subscription.hasActiveSubscription, // 「公開する」が選択され、かつ月額プラン契約中であるか
+        draft_saved: true, // 常に下書きは保存されたとみなす
+        last_draft_saved_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
-      console.log("保存する教室データ:", classroomDataToSave);
 
-      let supabaseError = null;
-      if (existingClassroom) {
+      const newPublishedState = classroomDataToSave.published;
+
+      let classroomId = existingClassroom?.id;
+
+      // 更新か新規作成かを判定 (IDの存在を確実にする)
+      if (classroomId) {
+        // 更新
         const { error } = await supabase
           .from('classrooms')
           .update(classroomDataToSave)
-          .eq('user_id', user.id); // 既存の教室はuser_idで一意に特定
-        supabaseError = error;
+          .eq('id', classroomId);
+        if (error) throw error;
+        toast({ title: "成功", description: "教室情報が更新されました。" });
       } else {
-        const { error } = await supabase
+        // 新規作成
+        const { data: newClassroomData, error } = await supabase
           .from('classrooms')
-          .insert(classroomDataToSave);
-        supabaseError = error;
+          .insert(classroomDataToSave)
+          .select('id')
+          .single();
+        if (error) throw error;
+        classroomId = newClassroomData.id;
+        toast({ title: "成功", description: "教室情報が下書き保存されました。" });
       }
+      
+      // フォームとstateをリセットまたは更新
+      form.reset(data); 
+      const updatedExistingClassroom: ExtendedClassroomFormValues = {
+        ...data,
+        id: classroomId, // ここでidをセット
+        publishedDbState: newPublishedState,
+        thumbnail_url: newThumbnailUrl,
+        image_urls: allImageUrls,
+        last_draft_saved_at: classroomDataToSave.last_draft_saved_at,
+      };
+      setExistingClassroom(updatedExistingClassroom);
+      setImages([]); // 新規アップロード用画像をクリア
+      setExistingImageUrls(allImageUrls); // 既存画像URLリストを更新
 
-      if (supabaseError) {
-        throw supabaseError;
-      }
-
+      if (publishStatus === 'public' && !subscription.hasActiveSubscription) {
       toast({
-        title: "成功",
-        description: `教室情報が${publishStatus === 'public' ? '公開' : '下書き保存'}されました。`,
-      });
-      await refreshSubscriptionStatus();
-      images.forEach(file => { // 新規アップロードした画像のObjectURLを解放
-        const url = objectUrlsRef.current.get(file);
-        if (url) {
-          URL.revokeObjectURL(url);
-          objectUrlsRef.current.delete(file);
+          title: "保存設定の確認",
+          description: "教室情報は下書きとして保存されました。公開するには月額プランのご契約が必要です。管理画面からお手続きください。",
+          duration: 7000
+        });
+      } else if (publishStatus === 'public') {
+        toast({ title: "成功", description: "教室情報が公開されました！" });
         }
-      });
-      setImages([]); // 新規画像リストをクリア
+
+      // 教室リストページまたは管理画面にリダイレクト
       navigate('/dashboard');
       
-    } catch (error: unknown) {
-      console.error("教室情報の保存エラー:", error);
-      let errorMessage = "教室情報の保存に失敗しました。";
-      if (error instanceof Error) {
-        errorMessage = `教室情報の保存に失敗しました: ${error.message}`;
-      }
-      toast({
-        title: "エラー",
-        description: errorMessage,
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error("フォーム送信エラー:", error);
+      toast({ title: "エラー", description: (error as Error).message || "処理中にエラーが発生しました。", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (loading || authLoading) {
+  if (loading || authLoading || subscriptionLoading) {
     return (
-      <Layout showBreadcrumb={false}>
-        <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">データを読み込み中...</p>
-        </div>
+      <Layout title="読み込み中...">
+        <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
       </Layout>
     );
   }
 
-  if (!user) {
-    return null;
-  }
-
-  const canPublish = subscription && subscription.hasActiveSubscription;
-
   return (
-    <Layout title={existingClassroom ? '教室情報編集' : '教室情報登録'}>
-      <div className="max-w-4xl mx-auto">
-      <div className="mb-10 text-center">
-        <p className="text-muted-foreground">
-          {existingClassroom 
-            ? '保存済みの教室情報を編集できます。' 
-            : 'あなたの教室情報を登録して、生徒さんとの出会いを広げましょう。'
-          }
-          {!existingClassroom && '登録後、月額500円のお支払いで情報が公開されます。'}
-        </p>
-        {existingClassroom && (
-          <p className="text-sm text-blue-600 mt-2">
-            💡 下書きが保存されています。公開するには管理画面で決済を完了してください。
-        </p>
-        )}
-      </div>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* 基本情報セクション */}
-          <Card>
+    <Layout title={existingClassroom ? "教室情報の編集" : "教室情報を登録して魅力を伝えましょう"}>
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <School size={20} />
-                基本情報
+            <div className="flex items-center mb-2">
+              <School className="h-7 w-7 mr-2 text-primary" />
+              <CardTitle className="text-2xl font-bold">
+                {existingClassroom ? "教室情報の編集" : "教室情報の入力"}
               </CardTitle>
-              <CardDescription>教室の基本的な情報を入力してください</CardDescription>
+            </div>
+            <CardDescription className="text-md">
+              {existingClassroom 
+                ? "登録済みの教室情報を編集できます。変更内容は下にスクロールして「更新して保存」ボタンを押してください。" 
+                : "あなたの教室の詳細情報を入力してください。入力された情報は下書きとして保存され、いつでも編集可能です。"}
+              <br />
+              {!existingClassroom && "教室を公開して生徒募集を開始するには、別途月額プランのご契約（月額500円）が必要です。"}
+            </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
+                
+                {/* 基本情報セクション */}
+                <section id="basic-info">
+                  <h2 className="text-xl font-semibold mb-6 border-b pb-3 flex items-center">
+                    <Info size={22} className="mr-2 text-primary" /> 基本情報
+                  </h2>
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>教室名 *</FormLabel>
+                      <FormItem className="mb-8">
+                        <FormLabel className="font-medium">教室名 (必須)</FormLabel>
                     <FormControl>
-                      <Input placeholder="例：ABC音楽教室" {...field} data-testid="classroom-name" />
+                          <InputWithCounter 
+                            placeholder="例：鈴木ピアノ教室、リトミックスタジオ・マーチ" 
+                            maxLength={FIELD_LIMITS.name}
+                            {...field} 
+                            data-testid="classroom-name" 
+                          />
                     </FormControl>
+                        <FormDescription>
+                          ウェブサイトや看板に表示される教室の正式名称を入力してください。({FIELD_LIMITS.name}文字まで)
+                        </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>教室の説明 *</FormLabel>
+                      <FormItem className="mb-8">
+                        <FormLabel className="font-medium">教室の説明 (必須)</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="教室の特徴やレッスン内容などを詳しく説明してください" {...field} rows={8} data-testid="classroom-description" />
+                          <TextareaWithCounter
+                            placeholder="教室の特徴、レッスン内容、雰囲気、対象とする生徒さんへのメッセージなどを具体的に記述してください。"
+                            className="min-h-[120px] resize-y"
+                            maxLength={FIELD_LIMITS.description}
+                            {...field}
+                            data-testid="classroom-description"
+                          />
                     </FormControl>
+                        <FormDescription>
+                          生徒さんが教室を選ぶ上で重要な情報となります。10文字以上、{FIELD_LIMITS.description}文字以内でご記入ください。
+                        </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
-              <div className="space-y-4">
                 <div>
-                  <FormLabel>写真アップロード</FormLabel>
-                  <div className="mt-2">
-                    <div className="flex items-center justify-center w-full">
-                      <label
-                        htmlFor="image-upload"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
-                      >
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <ImageUp className="w-8 h-8 mb-2 text-gray-500" />
-                          <p className="mb-2 text-sm text-gray-500">
-                            クリックまたはドラッグで画像をアップロード
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            PNG, JPG (最大5MB)
-                          </p>
-                        </div>
-                        <input
-                          id="image-upload"
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="hidden"
-                          onChange={(e) => { // This onChange handles file selection
-                            if (e.target.files) {
-                              const newFiles = Array.from(e.target.files);
-                              const currentTotalImages = getAllImages().length; // Use getAllImages here
-                              if (currentTotalImages + newFiles.length > 5) {
-                                toast({
-                                  title: "画像枚数制限",
-                                  description: `画像は最大5枚まで登録できます。現在${currentTotalImages}枚登録済みです。`,
-                                  variant: "destructive",
-                                });
-                                return;
-                              }
-                              setImages(prev => [...prev, ...newFiles]);
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                  {getAllImages().length > 0 && (
-                  <div>
-                      <p className="text-sm font-medium mb-2">登録画像（{getAllImages().length}枚）</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {getAllImages().map((_, index) => (
-                        <div key={index} className="relative group">
+                    <FormLabel className="font-medium block mb-2">教室の写真 (任意・最大6枚)</FormLabel>
+                    <FormDescription className="mb-3">
+                      教室の雰囲気、レッスン風景、外観などの写真をアップロードできます。<br />
+                      <span className="font-semibold text-primary">🌟 メイン画像に設定した写真は、教室詳細ページで教室名の直下に大きく表示されます。</span><br />
+                      また、検索結果のサムネイルとしても使用されますので、教室の魅力が最も伝わる写真をメイン画像に設定してください。<br />
+                      (推奨形式: JPG, PNG / 各ファイル最大5MB)
+                    </FormDescription>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                      {getAllImages().map((item, index) => (
+                        <div key={index} className="relative group aspect-video border rounded-md overflow-hidden">
                           <img
                               src={getImageUrl(index)}
                             alt={`教室画像 ${index + 1}`}
-                            className="h-24 w-full object-cover rounded-md"
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
                           />
-                          <button
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex flex-col items-center justify-center space-y-1">
+                            <Button 
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); handleRemoveImage(index); }}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            ✕
-                          </button>
-                          <button
+                              variant="destructive"
+                              size="sm"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 h-auto"
+                              onClick={() => handleRemoveImage(index)}
+                              aria-label={`画像を削除 ${index + 1}`}
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                            <Button 
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); handleThumbnailSelect(index); }}
-                            className={`absolute bottom-1 left-1 p-1 rounded-full transition-opacity ${index === thumbnailIndex ? 'bg-blue-500' : 'bg-gray-500/70'}`}
-                          >
-                            <Star className="h-4 w-4 text-white" />
-                          </button>
+                              variant={thumbnailIndex === index ? "default" : "secondary"} 
+                              size="sm"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 h-auto text-xs leading-tight"
+                              onClick={() => handleThumbnailSelect(index)}
+                              title={thumbnailIndex === index ? 'メイン画像として設定中' : 'メイン画像に設定する'}
+                            >
+                              {thumbnailIndex === index ? <Star size={14} className="mr-1 fill-current" /> : <Star size={14} className="mr-1"/>}
+                              {thumbnailIndex === index ? 'メイン画像' : 'メイン画像に設定'}
+                            </Button>
+                          </div>
                         </div>
                       ))}
+                      {(getAllImages().length < MAX_IMAGES) && (
+                        <label htmlFor="image-upload" className="cursor-pointer aspect-video border-2 border-dashed rounded-md flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors">
+                          <ImageUp size={32} className="mb-1" />
+                          <span className="text-sm">写真を追加</span>
+                          <input id="image-upload" type="file" multiple accept="image/png, image/jpeg" className="hidden" onChange={handleImageChange} />
+                        </label>
+                      )}
                     </div>
-                  </div>
+                    {getAllImages().length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                            現在 {getAllImages().length}枚 / 最大{MAX_IMAGES}枚. ドラッグ&ドロップは未対応です。
+                        </p>
                 )}
               </div>
-            </CardContent>
-          </Card>
+                </section>
+
+                <Separator className="my-8" />
 
           {/* 所在地セクション */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin size={20} />
-                所在地
-              </CardTitle>
-              <CardDescription>教室の住所情報を入力してください</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+                <section id="location-info">
+                  <h2 className="text-xl font-semibold mb-6 border-b pb-3 flex items-center">
+                    <MapPin size={22} className="mr-2 text-primary" /> 所在地
+                  </h2>
               <FormField
                 control={form.control}
                 name="prefecture"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>都道府県 *</FormLabel>
+                      <FormItem className="mb-6">
+                        <FormLabel className="font-medium">都道府県 (必須)</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
-                      <select {...field} className="w-full p-2 border border-gray-300 rounded-md" data-testid="classroom-prefecture">
-                        <option value="">選択してください</option>
-                        {prefectures.map(pref => (
-                          <option key={pref} value={pref}>
-                            {pref}
-                          </option>
-                        ))}
-                      </select>
+                            <SelectTrigger data-testid="classroom-prefecture">
+                              <SelectValue placeholder="都道府県を選択してください" />
+                            </SelectTrigger>
                     </FormControl>
+                          <SelectContent>
+                            {prefectures.map((pref) => (
+                              <SelectItem key={pref} value={pref}>{pref}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="city"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>市区町村 *</FormLabel>
+                      <FormItem className="mb-8">
+                        <FormLabel className="font-medium">市区町村 (必須)</FormLabel>
                     <FormControl>
-                      <Input placeholder="例：渋谷区" {...field} data-testid="classroom-city" />
+                          <InputWithCounter 
+                            placeholder="例：千代田区丸の内、横浜市西区みなとみらい" 
+                            maxLength={FIELD_LIMITS.city}
+                            {...field} 
+                            data-testid="classroom-city" 
+                          />
                     </FormControl>
+                        <FormDescription>
+                          「〇〇市〇〇区〇〇町」や「〇〇市〇〇学区」のように入力してください。({FIELD_LIMITS.city}文字まで)
+                        </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="address"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>番地以降の住所 *</FormLabel>
+                      <FormItem className="mb-8">
+                        <FormLabel className="font-medium">番地・建物名・最寄駅など (任意)</FormLabel>
                     <FormControl>
-                      <Input placeholder="例：神南1-1-1 ABCビル2F" {...field} data-testid="classroom-address" />
+                          <InputWithCounter 
+                            placeholder="例：1-2-3 ABCビル2F、JR東京駅 八重洲中央口 徒歩5分" 
+                            maxLength={FIELD_LIMITS.address}
+                            {...field} 
+                            data-testid="classroom-address" 
+                          />
                     </FormControl>
+                        <FormDescription>
+                          詳細な住所を公開したくない場合は、最寄りの駅名や目印などを入力できます。({FIELD_LIMITS.address}文字まで)
+                        </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
+                </section>
+                
+                <Separator className="my-8" />
 
           {/* 連絡先セクション */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Phone size={20} />
-                連絡先
-              </CardTitle>
-              <CardDescription>生徒さんが連絡できる方法を入力してください</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+                <section id="contact-info">
+                  <h2 className="text-xl font-semibold mb-6 border-b pb-3 flex items-center">
+                    <Phone size={20} className="mr-2.5 text-primary" /> 連絡先
+                  </h2>
               <FormField
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>電話番号</FormLabel>
+                      <FormItem className="mb-8">
+                        <FormLabel className="font-medium">電話番号 (任意)</FormLabel>
                     <FormControl>
-                      <Input placeholder="例：03-1234-5678" {...field} data-testid="classroom-phone" />
+                          <InputWithCounter 
+                            type="tel" 
+                            placeholder="例：03-1234-5678 (市外局番から)" 
+                            maxLength={FIELD_LIMITS.phone}
+                            {...field} 
+                            data-testid="classroom-phone" 
+                          />
                     </FormControl>
                     <FormDescription>
-                      公開したくない場合は空欄でも構いません
+                          公開したくない場合は空欄のままで構いません。({FIELD_LIMITS.phone}文字まで)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>メールアドレス *</FormLabel>
+                      <FormItem className="mb-8">
+                        <FormLabel className="font-medium">メールアドレス (必須)</FormLabel>
                     <FormControl>
-                      <Input placeholder="info@example.com" {...field} data-testid="classroom-email" />
+                          <InputWithCounter 
+                            type="email" 
+                            placeholder="info@example.com" 
+                            maxLength={FIELD_LIMITS.email}
+                            {...field} 
+                            data-testid="classroom-email" 
+                          />
                     </FormControl>
+                        <FormDescription>
+                          生徒さんからの連絡に使用されます。正確なアドレスを入力してください。({FIELD_LIMITS.email}文字まで)
+                        </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="website_url"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ウェブサイトURL</FormLabel>
+                      <FormItem className="mb-8">
+                        <FormLabel className="font-medium">ウェブサイトURL (任意)</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://example.com" {...field} data-testid="classroom-website" />
+                          <InputWithCounter 
+                            type="url" 
+                            placeholder="https://example.com" 
+                            maxLength={FIELD_LIMITS.website_url}
+                            {...field} 
+                            data-testid="classroom-website"
+                          />
                     </FormControl>
+                        <FormDescription>
+                          教室の公式ウェブサイトやブログ、SNSページのURLがあれば入力してください。({FIELD_LIMITS.website_url}文字まで)
+                        </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
+                </section>
+
+                <Separator className="my-8" />
 
           {/* レッスン情報セクション */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Info size={20} />
-                レッスン情報
-              </CardTitle>
-              <CardDescription>レッスンの詳細を入力してください</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+                <section id="lesson-info">
+                  <h2 className="text-xl font-semibold mb-6 border-b pb-3 flex items-center">
+                    <CalendarDays size={20} className="mr-2.5 text-primary" /> レッスン情報
+                  </h2>
               <FormField
                 control={form.control}
                 name="lesson_types"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>レッスンの種類 *</FormLabel>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                        {LESSON_TYPES.map((type) => (
+                    render={({ field }) => (
+                      <FormItem className="mb-6">
+                        <FormLabel className="font-medium">レッスンの種類 (必須・複数選択可)</FormLabel>
+                        <FormDescription className="mb-2">
+                          提供しているレッスンの種類をすべて選択してください。
+                        </FormDescription>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
+                          {LESSON_TYPES.map((item) => (
                         <FormField
-                          key={type.id}
+                              key={item.id}
                           control={form.control}
                           name="lesson_types"
-                          render={({ field }) => {
+                              render={({ field: itemField }) => {
                             return (
-                              <FormItem
-                                key={type.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
+                                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                                 <FormControl>
                                   <Checkbox
-                                    checked={field.value?.includes(type.id)}
+                                        checked={itemField.value?.includes(item.id)}
                                     onCheckedChange={(checked) => {
                                       return checked
-                                        ? field.onChange([...field.value, type.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== type.id
+                                            ? itemField.onChange([...(itemField.value || []), item.id])
+                                            : itemField.onChange(
+                                                (itemField.value || []).filter(
+                                                  (value) => value !== item.id
                                             )
                                           );
                                     }}
-                                    data-testid={`lesson-type-${type.id}`}
                                   />
                                 </FormControl>
                                 <FormLabel className="font-normal">
-                                  {type.label}
+                                      {item.label}
                                 </FormLabel>
                               </FormItem>
                             );
@@ -848,42 +886,40 @@ const ClassroomRegistration = () => {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="target_ages"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>対象年齢 *</FormLabel>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                        {AGE_GROUPS.map((age) => (
+                    render={({ field }) => (
+                      <FormItem className="mb-6">
+                        <FormLabel className="font-medium">対象年齢 (必須・複数選択可)</FormLabel>
+                        <FormDescription className="mb-2">
+                          主なレッスン対象となる年齢層を選択してください。
+                        </FormDescription>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
+                          {AGE_GROUPS.map((item) => (
                         <FormField
-                          key={age.id}
+                              key={item.id}
                           control={form.control}
                           name="target_ages"
-                          render={({ field }) => {
+                              render={({ field: itemField }) => {
                             return (
-                              <FormItem
-                                key={age.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
+                                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                                 <FormControl>
                                   <Checkbox
-                                    checked={field.value?.includes(age.id)}
+                                        checked={itemField.value?.includes(item.id)}
                                     onCheckedChange={(checked) => {
                                       return checked
-                                        ? field.onChange([...field.value, age.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== age.id
+                                            ? itemField.onChange([...(itemField.value || []), item.id])
+                                            : itemField.onChange(
+                                                (itemField.value || []).filter(
+                                                  (value) => value !== item.id
                                             )
                                           );
                                     }}
-                                    data-testid={`target-age-${age.id}`}
                                   />
                                 </FormControl>
                                 <FormLabel className="font-normal">
-                                  {age.label}
+                                      {item.label}
                                 </FormLabel>
                               </FormItem>
                             );
@@ -895,41 +931,40 @@ const ClassroomRegistration = () => {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="available_days"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>レッスン可能曜日 *</FormLabel>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                        {WEEKDAYS.map((day) => (
+                    render={({ field }) => (
+                      <FormItem className="mb-6">
+                        <FormLabel className="font-medium">レッスン可能曜日 (必須・複数選択可)</FormLabel>
+                        <FormDescription className="mb-2">
+                          レッスンを行っている曜日をすべて選択してください。
+                        </FormDescription>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-2">
+                          {WEEKDAYS.map((item) => (
                         <FormField
-                          key={day.id}
+                              key={item.id}
                           control={form.control}
                           name="available_days"
-                          render={({ field }) => {
+                              render={({ field: itemField }) => {
                             return (
-                              <FormItem
-                                key={day.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
+                                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                                 <FormControl>
                                   <Checkbox
-                                    checked={field.value?.includes(day.id)}
+                                        checked={itemField.value?.includes(item.id)}
                                     onCheckedChange={(checked) => {
                                       return checked
-                                        ? field.onChange([...field.value, day.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== day.id
+                                            ? itemField.onChange([...(itemField.value || []), item.id])
+                                            : itemField.onChange(
+                                                (itemField.value || []).filter(
+                                                  (value) => value !== item.id
                                             )
                                           );
                                     }}
                                   />
                                 </FormControl>
                                 <FormLabel className="font-normal">
-                                  {day.label}
+                                      {item.label}
                                 </FormLabel>
                               </FormItem>
                             );
@@ -941,146 +976,175 @@ const ClassroomRegistration = () => {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="available_times"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>レッスン時間帯</FormLabel>
+                      <FormItem className="mb-8">
+                        <FormLabel className="font-medium">レッスン時間帯 (任意)</FormLabel>
                     <FormControl>
-                      <Input placeholder="例：平日10:00-18:00、土日10:00-15:00" {...field} />
+                          <InputWithCounter 
+                            placeholder="例：平日 10:00～18:00、土日祝 9:00～17:00" 
+                            maxLength={FIELD_LIMITS.available_times}
+                            {...field} 
+                            data-testid="classroom-times" 
+                          />
                     </FormControl>
+                        <FormDescription>
+                          具体的なレッスン時間や、曜日ごとの違いなどがあれば補足説明としてご記入ください。({FIELD_LIMITS.available_times}文字まで)
+                        </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="price_range"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>料金目安（月謝など）*</FormLabel>
+                      <FormItem className="mb-8">
+                        <FormLabel className="font-medium">料金目安 (必須)</FormLabel>
                     <FormControl>
-                      <Input placeholder="例：月謝8,000円〜12,000円" {...field} data-testid="classroom-price-range" />
+                          <InputWithCounter 
+                            placeholder="例：月謝 8,000円～、1レッスン 3,000円（税込）" 
+                            maxLength={FIELD_LIMITS.price_range}
+                            {...field} 
+                            data-testid="classroom-price" 
+                          />
                     </FormControl>
+                        <FormDescription>
+                          最も代表的なコースの月謝や1レッスンあたりの料金などを入力してください。必要に応じて「税込」「税抜」も明記してください。({FIELD_LIMITS.price_range}文字まで)
+                        </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
+                </section>
+
+                <Separator className="my-8" />
 
           {/* 追加情報セクション */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users size={20} />
-                追加情報
-              </CardTitle>
-              <CardDescription>その他のPR情報を入力してください</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+                <section id="additional-info">
+                  <h2 className="text-xl font-semibold mb-6 border-b pb-3 flex items-center">
+                    <Star size={20} className="mr-2.5 text-primary" /> 追加情報 (任意)
+                  </h2>
               <FormField
                 control={form.control}
                 name="instructor_info"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>講師紹介</FormLabel>
+                      <FormItem className="mb-8">
+                        <FormLabel className="font-medium">講師紹介</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="講師の経歴や実績、指導方針などを記入してください" 
+                      <TextareaWithCounter 
+                            placeholder="講師の経歴、実績、指導方針、生徒さんへのメッセージなどを記入してください。"
+                            className="min-h-[100px] resize-y"
+                            maxLength={FIELD_LIMITS.instructor_info}
                         {...field}
-                        className="min-h-[100px]"
+                            data-testid="classroom-instructor"
                       />
                     </FormControl>
+                        <FormDescription>
+                          任意入力です。{FIELD_LIMITS.instructor_info}文字以内でご記入ください。
+                        </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="pr_points"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>PRポイント</FormLabel>
+                      <FormItem className="mb-8">
+                        <FormLabel className="font-medium">教室のPRポイント</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="教室の特長や強み、他教室との差別化ポイントなどを記入してください" 
+                      <TextareaWithCounter 
+                            placeholder="教室の特長、強み、他教室との差別化ポイント、発表会やイベント情報などを自由にアピールしてください。"
+                            className="min-h-[100px] resize-y"
+                            maxLength={FIELD_LIMITS.pr_points}
                         {...field}
-                        className="min-h-[100px]"
+                            data-testid="classroom-pr"
                       />
                     </FormControl>
+                        <FormDescription>
+                          任意入力です。{FIELD_LIMITS.pr_points}文字以内でご記入ください。
+                        </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
+                </section>
 
-          {/* 公開ステータス選択UI */} 
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-700 flex items-center">
-              <Eye className="mr-2 h-5 w-5 text-sky-600" /> 公開設定
-            </h3>
-            <div className="flex items-center space-x-2 p-4 border rounded-md bg-gray-50">
+                <Separator className="my-8" />
+
+                {/* 公開設定セクション */}
+                <section id="publish-settings" className="space-y-6">
+                    <h2 className="text-xl font-semibold mb-2 border-b pb-3 flex items-center">
+                        <Eye size={20} className="mr-2.5 text-primary" /> 公開設定
+                    </h2>
+                    
+                    {!subscription.hasActiveSubscription && (
+                        <Alert variant="default">
+                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                            <AlertTitle className="font-semibold text-yellow-700">月額プラン未契約</AlertTitle>
+                            <AlertDescription className="text-yellow-600">
+                                教室情報を公開するには、月額500円の月額プランのご契約が必要です。
+                                まずは下書きとして情報を保存し、
+                                <Link to="/dashboard?tab=plan-details" className="underline font-medium hover:text-yellow-900">
+                                    管理画面でプラン内容を確認
+                                </Link>
+                                の上、ご契約ください。
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
+                    <div className="flex items-center space-x-3 p-4 border rounded-md bg-muted/40">
               <Switch
-                id="publish-status-switch"
+                            id="publish-switch"
                 checked={publishStatus === 'public'}
-                onCheckedChange={(checked) => {
-                  setPublishStatus(checked ? 'public' : 'draft');
-                }}
-                disabled={!canPublish && publishStatus === 'draft'} // 未払いで下書き状態の場合、公開への変更を不可
-                data-testid="publish-status-switch"
+                            onCheckedChange={(checked) => setPublishStatus(checked ? 'public' : 'draft')}
+                            disabled={!subscription.hasActiveSubscription && !existingClassroom?.publishedDbState}
+                            data-testid="publish-switch"
               />
-              <Label htmlFor="publish-status-switch" className="flex-grow">
-                {publishStatus === 'public' ? "教室を公開する" : "下書きとして保存"}
-              </Label>
-              {!canPublish && (
-                <p className="text-xs text-orange-600 bg-orange-100 p-2 rounded-md">
-                  <Info className="inline mr-1 h-4 w-4" />
-                  教室を公開するには、まず料金プランへのお支払いが必要です。
-                  {existingClassroom && publishStatus === 'public' && (
-                      " 現在は公開されていますが、下書きにすると再公開には支払いが必要です。"
-                  )}
+                        <Label htmlFor="publish-switch" className="flex flex-col space-y-1">
+                            <span className="font-medium">
+                                {publishStatus === 'public' ? "教室情報を公開する" : "下書きとして保存する"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                                {subscription.hasActiveSubscription 
+                                    ? (publishStatus === 'public' ? "チェックを外すと教室情報は非公開（下書き）になります。" : "チェックを入れると教室情報が公開されます。")
+                                    : "教室を公開するには月額プランのご契約が必要です。現在は下書き保存のみ可能です。公開設定はプラン契約後に変更できます。"}
+                            </span>
+                            {!subscription.hasActiveSubscription && !existingClassroom?.publishedDbState && (
+                               <p className="text-xs text-muted-foreground mt-1">
+                                 先に <Link to="/dashboard?tab=plan-details" className="underline">管理画面で月額プランをご契約</Link> いただくと、ここから直接公開できます。
                 </p>
               )}
+                        </Label>
           </div>
-            {canPublish && publishStatus === 'draft' && (
-               <p className="text-xs text-gray-500 pl-1">
-                  これをオンにすると、保存時に教室情報が公開されます。
+                    {existingClassroom?.last_draft_saved_at && (
+                        <p className="text-sm text-muted-foreground">
+                            最終下書き保存日時: {new Date(existingClassroom.last_draft_saved_at).toLocaleString('ja-JP')}
                </p>
             )}
-            {canPublish && publishStatus === 'public' && (
-               <p className="text-xs text-gray-500 pl-1">
-                  これをオフにすると、保存時に教室情報は下書き（非公開）になります。
-               </p>
-            )}
-          </div>
+                </section>
 
-          <Separator />
-
+                <CardFooter className="flex justify-end pt-8">
           <Button 
             type="submit" 
-            disabled={isSubmitting || !form.formState.isValid}
-            data-testid="submit-classroom-registration"
-            className="w-full bg-sky-600 hover:bg-sky-700 text-white text-lg py-3 rounded-lg transition duration-150 ease-in-out flex items-center justify-center"
+                    disabled={isSubmitting || loading || authLoading || subscriptionLoading}
+                    className="min-w-[180px]"
+                    data-testid="submit-classroom-form"
           >
             {isSubmitting ? (
-              <>
-                <Clock className="mr-2 h-5 w-5 animate-spin" /> 送信中...
-              </>
+                      <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>処理中...</>
             ) : (
-              <>
-                <School className="mr-2 h-5 w-5" /> 
-                {publishStatus === 'public' ? (existingClassroom ? "更新して公開" : "登録して公開") : (existingClassroom ? "更新して下書き保存" : "登録して下書き保存")}
-              </>
+                      existingClassroom ? "更新して保存" : "登録して下書き保存"
             )}
           </Button>
+                </CardFooter>
         </form>
       </Form>
+          </CardContent>
+        </Card>
     </div>
     </Layout>
   );

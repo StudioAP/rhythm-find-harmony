@@ -1,8 +1,8 @@
-# ピアノ教室・リトミック教室検索.com - 日本語メールテンプレート
+# ピアノ教室・リトミック教室検索.org - 日本語メールテンプレート
 
 ## Confirm Signup（新規登録確認）テンプレート
 
-**Subject:** ピアノ教室・リトミック教室検索.com - メールアドレスの確認
+**Subject:** ピアノ教室・リトミック教室検索.org - メールアドレスの確認
 
 **HTML Content:**
 ```html
@@ -11,18 +11,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ピアノ教室・リトミック教室検索.com - メールアドレスの確認</title>
+    <title>ピアノ教室・リトミック教室検索.org - メールアドレスの確認</title>
 </head>
 <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: #2563eb; margin-bottom: 10px;">🎹 ピアノ教室・リトミック教室検索.com</h1>
+        <h1 style="color: #2563eb; margin-bottom: 10px;">🎹 ピアノ教室・リトミック教室検索.org</h1>
         <p style="color: #666; font-size: 18px;">ピアノ教室検索サービス</p>
     </div>
     
     <div style="background-color: #f8fafc; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
         <h2 style="color: #1e40af; margin-bottom: 20px;">メールアドレスの確認</h2>
         
-        <p style="margin-bottom: 20px;">ピアノ教室・リトミック教室検索.comにご登録いただき、ありがとうございます！</p>
+        <p style="margin-bottom: 20px;">ピアノ教室・リトミック教室検索.orgにご登録いただき、ありがとうございます！</p>
         
         <p style="margin-bottom: 20px;">アカウントを有効化するため、以下のボタンをクリックしてメールアドレスを確認してください：</p>
         
@@ -52,10 +52,10 @@
     
     <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
         <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
-            このメールは ピアノ教室・リトミック教室検索.com から自動送信されました。
+            このメールは ピアノ教室・リトミック教室検索.org から自動送信されました。
         </p>
         <p style="color: #666; font-size: 12px; margin-bottom: 0;">
-            © 2025 ピアノ教室・リトミック教室検索.com. All rights reserved.
+            © 2025 ピアノ教室・リトミック教室検索.org. All rights reserved.
         </p>
     </div>
 </body>
@@ -64,7 +64,7 @@
 
 ## Reset Password（パスワードリセット）テンプレート
 
-**Subject:** ピアノ教室・リトミック教室検索.com - パスワードリセット
+**Subject:** ピアノ教室・リトミック教室検索.org - パスワードリセット
 
 **HTML Content:**
 ```html
@@ -73,11 +73,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ピアノ教室・リトミック教室検索.com - パスワードリセット</title>
+    <title>ピアノ教室・リトミック教室検索.org - パスワードリセット</title>
 </head>
 <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: #2563eb; margin-bottom: 10px;">🎹 ピアノ教室・リトミック教室検索.com</h1>
+        <h1 style="color: #2563eb; margin-bottom: 10px;">🎹 ピアノ教室・リトミック教室検索.org</h1>
         <p style="color: #666; font-size: 18px;">ピアノ教室検索サービス</p>
     </div>
     
@@ -86,7 +86,7 @@
         
         <p style="margin-bottom: 20px;">{{ .Email }} 様</p>
         
-        <p style="margin-bottom: 20px;">ピアノ教室・リトミック教室検索.comアカウントのパスワードリセットがリクエストされました。</p>
+        <p style="margin-bottom: 20px;">ピアノ教室・リトミック教室検索.orgアカウントのパスワードリセットがリクエストされました。</p>
         
         <div style="text-align: center; margin: 30px 0;">
             <a href="{{ .ConfirmationURL }}" 
@@ -108,10 +108,10 @@
     
     <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
         <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
-            このメールは ピアノ教室・リトミック教室検索.com から自動送信されました。
+            このメールは ピアノ教室・リトミック教室検索.org から自動送信されました。
         </p>
         <p style="color: #666; font-size: 12px; margin-bottom: 0;">
-            © 2025 ピアノ教室・リトミック教室検索.com. All rights reserved.
+            © 2025 ピアノ教室・リトミック教室検索.org. All rights reserved.
         </p>
     </div>
 </body>
@@ -120,7 +120,7 @@
 
 ## Magic Link（マジックリンク）テンプレート
 
-**Subject:** ピアノ教室・リトミック教室検索.com - ログインリンク
+**Subject:** ピアノ教室・リトミック教室検索.org - ログインリンク
 
 **HTML Content:**
 ```html
@@ -129,11 +129,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ピアノ教室・リトミック教室検索.com - ログインリンク</title>
+    <title>ピアノ教室・リトミック教室検索.org - ログインリンク</title>
 </head>
 <body style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: #2563eb; margin-bottom: 10px;">🎹 ピアノ教室・リトミック教室検索.com</h1>
+        <h1 style="color: #2563eb; margin-bottom: 10px;">🎹 ピアノ教室・リトミック教室検索.org</h1>
         <p style="color: #666; font-size: 18px;">ピアノ教室検索サービス</p>
     </div>
     
@@ -142,12 +142,12 @@
         
         <p style="margin-bottom: 20px;">{{ .Email }} 様</p>
         
-        <p style="margin-bottom: 20px;">ピアノ教室・リトミック教室検索.comへのログインリンクです。以下のボタンをクリックして簡単にログインできます：</p>
+        <p style="margin-bottom: 20px;">ピアノ教室・リトミック教室検索.orgへのログインリンクです。以下のボタンをクリックして簡単にログインできます：</p>
         
         <div style="text-align: center; margin: 30px 0;">
             <a href="{{ .ConfirmationURL }}" 
                style="background-color: #059669; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                ピアノ教室・リトミック教室検索.comにログイン
+                ピアノ教室・リトミック教室検索.orgにログイン
             </a>
         </div>
         
@@ -164,10 +164,10 @@
     
     <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
         <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
-            このメールは ピアノ教室・リトミック教室検索.com から自動送信されました。
+            このメールは ピアノ教室・リトミック教室検索.org から自動送信されました。
         </p>
         <p style="color: #666; font-size: 12px; margin-bottom: 0;">
-            © 2025 ピアノ教室・リトミック教室検索.com. All rights reserved.
+            © 2025 ピアノ教室・リトミック教室検索.org. All rights reserved.
         </p>
     </div>
 </body>
@@ -176,7 +176,7 @@
 
 ## 設定方法
 
-1. Supabaseダッシュボード → Authentication → Email Templates
+1. Supabase管理画面 → Authentication → Email Templates
 2. 各テンプレートを選択して上記HTMLをコピペ
 3. Subjectも忘れずに日本語に変更
 4. 保存して完了

@@ -1,14 +1,25 @@
 import { Button } from "@/components/ui/button";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/providers/AuthProvider";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { LogOut, UserCircle, LayoutDashboard, Settings } from "lucide-react";
 
 interface HeaderProps {
-  showAuth?: boolean;
   variant?: "default" | "minimal";
 }
 
-const Header = ({ showAuth = true, variant = "default" }: HeaderProps) => {
+const Header = ({ variant = "default" }: HeaderProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   
   const isActive = (path: string) => {
     if (path === "/") {
@@ -25,7 +36,7 @@ const Header = ({ showAuth = true, variant = "default" }: HeaderProps) => {
           to="/" 
           className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors"
         >
-                        ピアノ教室・リトミック教室検索.com
+                        ピアノ教室・リトミック教室検索.org
         </Link>
 
         {/* Navigation Links - 現在位置を明示 */}
@@ -61,17 +72,59 @@ const Header = ({ showAuth = true, variant = "default" }: HeaderProps) => {
           </nav>
         )}
 
-        {/* Auth Buttons - 統一されたリンク */}
-        {showAuth && (
-          <div className="space-x-2">
+        {/* Auth Area */}
+        <div className="space-x-2 flex items-center">
+          {user ? (
+            <>
+              <Button variant="ghost" asChild className="hidden sm:inline-flex">
+                <Link to="/classroom/register">教室を掲載する</Link>
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2 px-2 py-1 rounded-md hover:bg-accent">
+                    <UserCircle className="h-7 w-7" />
+                    <span className="text-sm font-medium hidden md:inline">{user.email}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {user.email}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        アカウント
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>教室管理画面</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/account-settings')} disabled>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>アカウント設定</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>ログアウト</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <>
             <Button variant="outline" asChild>
               <Link to="/auth">ログイン</Link>
             </Button>
             <Button asChild>
               <Link to="/classroom/register">教室を掲載する</Link>
             </Button>
+            </>
+          )}
           </div>
-        )}
       </div>
     </header>
   );

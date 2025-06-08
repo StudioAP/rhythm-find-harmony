@@ -115,7 +115,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // 教室運営者へのメール内容
     const toClassroomHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">【ピアノ教室・リトミック教室検索.com】お問い合わせがありました</h2>
+        <h2 style="color: #333;">【ピアノ教室・リトミック教室検索.org】お問い合わせがありました</h2>
         
         <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #666; margin-bottom: 15px;">お問い合わせ内容</h3>
@@ -148,7 +148,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         
         <div style="margin-top: 30px; padding: 15px; background-color: #e8f4f8; border-radius: 8px;">
           <p style="margin: 0; font-size: 14px; color: #666;">
-            このメールは <strong>ピアノ教室・リトミック教室検索.com</strong> のお問い合わせフォームから自動送信されました。<br>
+            このメールは <strong>ピアノ教室・リトミック教室検索.org</strong> のお問い合わせフォームから自動送信されました。<br>
             お問い合わせ主（${senderName} 様: ${senderEmail}）に直接ご返信ください。
           </p>
         </div>
@@ -172,10 +172,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'ピアノ教室・リトミック教室検索.com <info@piaryth.org>',
+          from: 'ピアノ教室・リトミック教室検索.org <info@piaryth.org>',
           to: [classroomEmail],
           reply_to: senderEmail,
-          subject: `【ピアノ教室・リトミック教室検索.com】${classroomName} へのお問い合わせがありました（${senderName} 様より）`,
+          subject: `【ピアノ教室・リトミック教室検索.org】${classroomName} へのお問い合わせがありました（${senderName} 様より）`,
           html: toClassroomHtml,
         }),
         signal: controller.signal

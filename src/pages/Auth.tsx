@@ -26,10 +26,10 @@ const Auth = () => {
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
 
-  // ログイン済みの場合はダッシュボードにリダイレクト（認証状態確定後のみ）
+  // ログイン済みの場合は管理画面にリダイレクト（認証状態確定後のみ）
   useEffect(() => {
     if (!loading && user) {
-      navigate("/dashboard");
+      navigate("/dashboard"); // TODO: パス変更検討
     }
   }, [user, loading, navigate]);
 
@@ -50,9 +50,10 @@ const Auth = () => {
     
       toast({
         title: "ログイン成功",
-        description: "ダッシュボードに移動します",
+        description: "管理画面に移動します", // ダッシュボード -> 管理画面
+        variant: "default",
       });
-      navigate("/dashboard");
+      navigate("/dashboard"); // TODO: パス変更検討
     } catch (error: any) {
       setError(
         error.message === "Invalid login credentials" 
@@ -72,31 +73,90 @@ const Auth = () => {
     setError("");
     setSignupSuccess(false);
 
-    console.log("Attempting to sign up with:", signupEmail, signupPassword);
+    console.log("Attempting to sign up with:", signupEmail, name);
 
     try {
-      await signUp(signupEmail, signupPassword);
-      
+      const result = await signUp(signupEmail, signupPassword, name);
+      console.log("[DEBUG] Raw signUp result:", JSON.stringify(result, null, 2)); // 詳細なresult内容を出力
+
+      const signUpError = result?.error;
+      const userData = result?.data;
+
+      if (signUpError) {
+        console.error("[DEBUG] signUpError before throw:", signUpError);
+        throw signUpError; // Explicitly throw to be caught by the catch block
+      }
+
+      // エラーがなく、ユーザーデータが存在する場合の処理
+      if (userData && userData.user) {
+        // identities が空配列の場合、ユーザーは既に存在し、確認済みと判断
+        if (userData.user.identities && userData.user.identities.length === 0) {
+          console.log("[DEBUG] User already exists and is confirmed (identities empty).");
+          toast({
+            title: "登録エラー",
+            description: "このメールアドレスは既に使用されています。ログインするか、別のアドレスをお試しください。",
+            variant: "destructive",
+            duration: 7000,
+          });
+          setError("このメールアドレスは既に使用されています。");
+          // 成功メッセージは表示しないので、ここで処理を終了
+          setIsLoading(false);
+          return;
+        } else {
+          // 新規登録成功、またはメール未確認ユーザーによる再試行（確認メール再送）
+          console.log("[DEBUG] New user or unconfirmed user, proceeding with success message.");
       setSignupSuccess(true);
         toast({
-        title: "アカウントが作成されました！",
-        description: "ログインしてご利用ください。",
-        duration: 5000,
+            title: "アカウント登録申請を受け付けました",
+            description: "確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。",
+            duration: 7000,
         });
-      
-        // フォームクリア
         setSignupEmail('');
         setSignupPassword('');
         setName('');
+        }
+      } else {
+        // 通常ここには到達しないはずだが、念のためエラーケースとして処理
+        console.error("[DEBUG] SignUp returned no error but no user data either.");
+        throw new Error("新規登録処理中に予期せぬ応答がありました。");
+      }
 
     } catch (error: any) {
-      console.error("SignUp error:", error);
-      if (error.message?.includes("already registered")) {
-        setError("このメールアドレスは既に登録されています");
-      } else if (error.message?.includes("Password")) {
-        setError("パスワードは6文字以上で入力してください");
+      console.error("[DEBUG] SignUp catch block error:", error);
+      console.error("[DEBUG] SignUp catch block error.message:", error?.message);
+      const errorMessage = String(error.message || '').toLowerCase();
+
+      // catch ブロックでは、throw されたエラーや予期せぬエラーを処理
+      if (errorMessage.includes("user already registered")) { // これはsignUpErrorが実際にこのメッセージを持つ場合
+        toast({
+          title: "登録エラー",
+          description: "このメールアドレスは既に使用されています。ログインするか、別のメールアドレスでお試しください。",
+          variant: "destructive",
+          duration: 7000,
+        });
+        setError("このメールアドレスは既に使用されています。"); 
+      } else if (errorMessage.includes("email link signin rate exceeded")) {
+        toast({
+          title: "登録エラー",
+          description: "短期間に複数回の試行がありました。しばらく時間をおいてから再度お試しください。",
+          variant: "destructive",
+          duration: 7000,
+        });
+        setError("試行回数が上限を超えました。時間をおいてください。");
+      } else if (errorMessage.includes("password should be at least 6 characters")) {
+        toast({
+          title: "登録エラー",
+          description: "パスワードは6文字以上で入力してください。",
+          variant: "destructive",
+        });
+        setError("パスワードは6文字以上で入力してください。");
       } else {
-        setError("新規登録に失敗しました。もう一度お試しください。");
+        toast({
+          title: "登録エラー",
+          description: error.message || "新規登録に失敗しました。入力内容をご確認の上、もう一度お試しください。", // エラーメッセージをそのまま使う
+          variant: "destructive",
+        });
+        setError(error.message || "新規登録に失敗しました。お手数ですが、再度お試しください。");
       }
     } finally {
       setIsLoading(false);
@@ -107,7 +167,7 @@ const Auth = () => {
     <Layout showHeader={false} showBreadcrumb={false} className="bg-gray-50 min-h-screen flex flex-col justify-center">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="text-center text-3xl font-bold text-gray-900 mb-8">
-                      ピアノ教室・リトミック教室検索.com
+                      ピアノ教室・リトミック教室検索.org
         </h2>
       </div>
 

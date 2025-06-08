@@ -134,7 +134,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
 2.  **適切なエラーハンドリング**: この `200 OK` が返ってくる状況で、フロントエンド側で「ユーザーは既に登録済みである」という事実を検知し、ユーザーに適切なフィードバック（「このメールアドレスは既に登録されています」など）を表示するための、最も堅牢な方法はどのようなものでしょうか？
     *   現在の `if (error)` という分岐では対応できません。`200 OK` 時のレスポンスボディの内容に基づいて判断する必要がある場合、どのような点を確認すべきでしょうか？
 
-3.  **Supabase Auth の設定確認**: SupabaseダッシュボードのAuth設定項目の中に、この挙動（既存ユーザーのsignUpで200 OKを返す）に関連するようなオプションはありますでしょうか？（例: "Email confirmations" や "Secure email change" の設定など）
+3.  **Supabase Auth の設定確認**: Supabase管理画面のAuth設定項目の中に、この挙動（既存ユーザーのsignUpで200 OKを返す）に関連するようなオプションはありますでしょうか？（例: "Email confirmations" や "Secure email change" の設定など）
 
 ## 求める回答
 

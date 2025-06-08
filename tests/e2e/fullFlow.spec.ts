@@ -156,4 +156,72 @@ test.describe('Full Flow: Classroom registration and search (auth skipped)', () 
     // RLS問題は別途対応が必要だが、基本的なフォーム送信と遷移は動作している
     console.log('✅ Test completed - Main flow working (RLS issue noted)');
   });
+});
+
+test.describe('認証済みユーザーの基本フロー', () => {
+  test.beforeEach(async ({ page }) => {
+    // 事前にログイン
+    await login(page, TEST_USER_EMAIL, TEST_USER_PASSWORD);
+    // 認証済み状態で管理画面にアクセス
+    await page.goto('/dashboard'); // TODO: パス変更後に修正
+    await expect(page).toHaveURL(/.*dashboard/); // TODO: パス変更後に修正
+  });
+
+  test('管理画面表示と教室登録フォームへの導線確認', async ({ page }) => {
+    // 認証が正しく処理され、管理画面が表示されることを確認
+    // 管理画面の主要な要素が表示されることを確認
+    await expect(page.locator('text=管理画面').or(page.locator('h1')).first()).toBeVisible({ timeout: 10000 }); // ダッシュボード -> 管理画面
+
+    // 教室登録ボタンが表示されていることを確認しクリック
+    await page.getByRole('button', { name: /教室情報を保存する|教室情報を公開する/ }).click();
+    
+    // フォーム送信で下書き保存し、管理画面へリダイレクトを待機
+    await expect(page).toHaveURL(/.*dashboard/, { timeout: 20000 }); // TODO: パス変更後に修正
+
+    // 保存された内容が管理画面に（一部でも）反映されていることを確認（簡易チェック）
+    // ... existing code ...
+  });
+
+  test('主要な操作がRLSの影響を受けずに実行できるか（暫定対応後）', async ({ page }) => {
+    // ユーザー登録（既存ユーザーならログインフォールバック）
+    await registerOrLogin(page, TEST_USER_EMAIL, TEST_USER_PASSWORD);
+
+    // 認証済み状態で管理画面にアクセス
+    await page.goto('/dashboard'); // TODO: パス変更後に修正
+    await expect(page).toHaveURL(/.*dashboard/); // TODO: パス変更後に修正
+
+    // 認証が正しく処理され、管理画面が表示されることを確認
+    // 管理画面の主要な要素が表示されることを確認
+    await expect(page.locator('text=管理画面').or(page.locator('h1')).first()).toBeVisible({ timeout: 10000 }); // ダッシュボード -> 管理画面
+
+    // 教室登録ページへの導線を確認しクリック
+    const createClassroomButton = page.getByRole('link', { name: /教室を登録する|教室情報を編集する/ });
+    // ... existing code ...
+    // フォーム入力 (一部) - 必須項目を中心に
+    await page.getByTestId('classroom-name').fill('テスト音楽教室 RLS確認');
+    await page.getByTestId('classroom-description').fill('この教室はRLSの影響を受けずに登録・表示されるかのテスト用です。');
+    await page.getByTestId('classroom-prefecture').selectOption('東京都');
+    await page.getByTestId('classroom-city').fill('テスト市');
+    await page.getByTestId('classroom-address').fill('テスト町1-1-1');
+    await page.getByLabel('メールアドレス *').fill('test-rls@example.com');
+    // 最低限の選択
+    await page.getByText('ピアノ').click();
+    await page.getByText('幼児').click();
+    await page.getByText('月曜日').click();
+    await page.getByLabel('料金目安 *').fill('月謝5000円～');
+
+
+    // フォーム送信 (公開状態で)
+    const publishSwitch = page.getByLabel('公開ステータス');
+    await publishSwitch.setChecked(true);
+    await page.waitForTimeout(500); // スイッチの反映を待つ
+
+    await page.getByRole('button', { name: /教室情報を保存する|教室情報を公開する/ }).click();
+    
+    // フォーム送信で下書き保存し、管理画面へリダイレクトを待機
+    await expect(page).toHaveURL(/.*dashboard/, { timeout: 20000 }); // TODO: パス変更後に修正
+
+    // 保存された内容が管理画面に（一部でも）反映されていることを確認（簡易チェック）
+    // ... existing code ...
+  });
 }); 

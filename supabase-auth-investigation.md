@@ -252,7 +252,10 @@ const handleSignUp = async (e: React.FormEvent) => {
 
 1.  **根本原因の特定**: `auth:1 Failed to load resource: the server responded with a status of 404 ()` のログは、やはり `VITE_SUPABASE_URL` の設定ミスが原因か？ ABEさんの分析通り、これを修正することで解消するか？
 2.  **エラーハンドリングの改善**: ABEさん提案の `try-catch` と `error.status` を利用したエラーハンドリングを実装することで、既存メールアドレスでの登録試行時に「このメールアドレスは既に登録されています」という正しいエラーメッセージを表示できるようになるか？
-3.  **Supabase Auth設定**: SupabaseダッシュボードのAuth設定で、「メール確認を必須にする(Secure email changeがON)」はデフォルトで有効だが、これが今回の「登録済みでも確認メールが行く（ように見える）」挙動に間接的に関連している可能性はあるか？（通常は重複エラーが優先されるはずだが念のため）
+3.  **Supabase Auth設定**: Supabase管理画面のAuth設定で、「メール確認を必須にする(Secure email changeがON)」はデフォルトで有効だが、これが今回の「登録済みでも確認メールが行く（ように見える）」挙動に間接的に関連している可能性はあるか？（通常は重複エラーが優先されるはずだが念のため）
+4.  **RLS (Row Level Security) ポリシーの競合**: `profiles` テーブルや関連テーブル（`users` など、Supabase Authが内部的に使用するものも含む）のRLSポリシーが、意図せず新規ユーザー登録時の書き込みや既存ユーザー情報の参照を妨げている可能性。
+    *   特に `INSERT` や `SELECT` のポリシーで、`auth.uid()` がまだ存在しない、または期待通りでない場合のフォールバックが考慮されているか。
+5.  **クライアント側ロジック**: `Auth.tsx` 内の `handleSignUp` や `handleSignInWithPassword` 関数で、エラーハンドリングやセッション管理、リダイレクト処理に微妙なタイミングの問題や条件分岐の漏れがないか。
 
 ## 求める回答 (更新)
 

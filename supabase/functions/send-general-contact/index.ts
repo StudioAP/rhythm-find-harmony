@@ -130,7 +130,7 @@ Deno.serve(async (req: Request) => {
     const toAdminHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">
-          【ピアノ教室・リトミック教室検索.com】お問い合わせがありました
+          【ピアノ教室・リトミック教室検索.org】お問い合わせがありました
         </h2>
         <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin: 20px 0;">
           <p><strong>件名:</strong> ${subject}</p>
@@ -142,7 +142,7 @@ Deno.serve(async (req: Request) => {
           <div style="line-height: 1.6;">${message.replace(/\n/g, '<br>')}</div>
         </div>
         <p style="color: #666; font-size: 12px; margin-top: 30px;">
-          このメールは ピアノ教室・リトミック教室検索.com から自動送信されました。
+          このメールは ピアノ教室・リトミック教室検索.org から自動送信されました。
         </p>
       </div>`;
     
@@ -150,10 +150,10 @@ Deno.serve(async (req: Request) => {
     const toSenderHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">
-          【ピアノ教室・リトミック教室検索.com】お問い合わせを受け付けました
+          【ピアノ教室・リトミック教室検索.org】お問い合わせを受け付けました
         </h2>
         <p>${senderName} 様</p>
-        <p>この度は、ピアノ教室・リトミック教室検索.comにお問い合わせいただき、ありがとうございます。</p>
+        <p>この度は、ピアノ教室・リトミック教室検索.orgにお問い合わせいただき、ありがとうございます。</p>
         <p>下記の内容でお問い合わせを受け付けました。確認次第、ご返信いたします。</p>
         
         <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin: 20px 0;">
@@ -169,12 +169,12 @@ Deno.serve(async (req: Request) => {
           </div>
         </div>
         
-        <p>このメールは <strong>ピアノ教室・リトミック教室検索.com</strong> から自動送信されました。<br>
+        <p>このメールは <strong>ピアノ教室・リトミック教室検索.org</strong> から自動送信されました。<br>
         ご不明点がございましたら、お気軽にお問い合わせください。</p>
         
         <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
         <p style="color: #666; font-size: 12px;">
-          © 2025 ピアノ教室・リトミック教室検索.com All rights reserved.
+          © 2025 ピアノ教室・リトミック教室検索.org All rights reserved.
         </p>
       </div>`;
 
@@ -191,7 +191,7 @@ Deno.serve(async (req: Request) => {
           from: RESEND_FROM_ADDRESS,
           to: [ADMIN_EMAIL_TO],
           reply_to: [`${senderName} <${senderEmail}>`],
-          subject: `【ピアノ教室・リトミック教室検索.com】${subject}`,
+          subject: `【ピアノ教室・リトミック教室検索.org】${subject}`,
           html: toAdminHtml,
           text: `お問い合わせがありました。\n件名: ${subject}\nお名前: ${senderName}\nメールアドレス: ${senderEmail}\n\n内容:\n${textContentForEmail}`,
         }),
@@ -228,7 +228,7 @@ Deno.serve(async (req: Request) => {
                 body: JSON.stringify({
                     from: RESEND_FROM_ADDRESS,
                     to: [senderEmail],
-                    subject: '【ピアノ教室・リトミック教室検索.com】お問い合わせを受け付けました',
+                    subject: '【ピアノ教室・リトミック教室検索.org】お問い合わせを受け付けました',
                     html: toSenderHtml,
                     text: `${senderName} 様\n\nお問い合わせありがとうございます。以下の内容で受け付けました。\n件名: ${subject}\nお名前: ${senderName}\nメールアドレス: ${senderEmail}\n\n内容:\n${textContentForEmail}`,
                 }),
@@ -239,7 +239,7 @@ Deno.serve(async (req: Request) => {
                 // Update log details for sender context
                 sender_name: senderName, 
                 sender_email: senderEmail, 
-                subject: '【ピアノ教室・リトミック教室検索.com】お問い合わせを受け付けました', 
+                subject: '【ピアノ教室・リトミック教室検索.org】お問い合わせを受け付けました', 
                 recipient_type: "sender", 
                 to_email: senderEmail, 
                 status_code: senderEmailResponse.status, 
@@ -253,7 +253,7 @@ Deno.serve(async (req: Request) => {
             await recordMailLog({ 
                 sender_name: senderName, 
                 sender_email: senderEmail, 
-                subject: '【ピアノ教室・リトミック教室検索.com】お問い合わせを受け付けました', 
+                subject: '【ピアノ教室・リトミック教室検索.org】お問い合わせを受け付けました', 
                 recipient_type: "sender", 
                 to_email: senderEmail, 
                 status_code: (e instanceof Error && e.name === 'TimeoutError') ? 408 : 500, 

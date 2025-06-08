@@ -34,12 +34,12 @@ const ClassroomDetail = () => {
 
   // パンくずリストのカスタム設定
   const breadcrumbItems = [
-    { label: "ホーム", href: "/" },
+    { label: "トップ", path: "/" },
     { 
-      label: isPreview ? "管理ダッシュボード" : "教室を探す", 
-      href: isPreview ? "/dashboard" : "/search" 
+      label: isPreview ? "管理画面" : "教室を探す",
+      path: isPreview ? "/dashboard" : "/search",
     },
-    { label: classroom?.name || "教室詳細" }
+    { label: classroom?.name || "詳細" },
   ];
 
   // 教室データの取得
@@ -281,6 +281,32 @@ const ClassroomDetail = () => {
                 体験レッスンあり
               </span>
             )}
+
+            {/* メイン画像（サムネイル画像）の表示 */}
+            <div className="mb-6">
+              <div className="relative w-full max-w-2xl mx-auto">
+                <img
+                  src={classroom.thumbnail_url || (classroom.image_urls && classroom.image_urls[0]) || defaultImage}
+                  alt={`${classroom.name} - メイン画像`}
+                  className="w-full h-64 sm:h-80 md:h-96 object-cover rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-300"
+                  onClick={() => setCurrentImageIndex(0)}
+                  onError={(e) => {
+                    console.error('メイン画像読み込みエラー:', classroom.thumbnail_url);
+                    e.currentTarget.src = defaultImage;
+                  }}
+                />
+                {hasActualImages && (
+                  <div className="absolute top-3 right-3 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                    メイン画像
+                  </div>
+                )}
+                {hasActualImages && (
+                  <div className="absolute bottom-3 left-3 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                    クリックで拡大
+                  </div>
+                )}
+              </div>
+            </div>
             
             {/* 説明（基本情報の前に移動） */}
             {classroom.description && (
@@ -389,7 +415,12 @@ const ClassroomDetail = () => {
         {/* 教室の写真ギャラリー（詳細確認用） */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
           <div className="p-6">
-            <h2 className="text-xl font-bold mb-4">教室の写真</h2>
+            <h2 className="text-xl font-bold mb-4">教室の写真ギャラリー</h2>
+            {hasActualImages && displayImages.length > 1 && (
+              <p className="text-gray-600 text-sm mb-4">
+                上記のメイン画像以外にも、教室の様子をご覧いただけます。
+              </p>
+            )}
             {hasActualImages ? (
               <div className={`grid gap-4 ${
                 displayImages.length === 1 
