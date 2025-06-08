@@ -12,6 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { ClassroomWithSubscriptions } from "@/types/classroom";
 import { translateDay, translateLessonType, translateAgeRange } from "@/constants/classroomData";
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/SEOHead";
+import StructuredData from "@/components/StructuredData";
 
 const ClassroomDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -106,26 +108,106 @@ const ClassroomDetail = () => {
     fetchClassroom();
   }, [id, getClassroomById, getClassroomByIdForPreview, isPreview, user?.id]);
 
+  // 動的SEOメタデータの生成
+  const generateSEOData = () => {
+    if (!classroom) {
+      return {
+        title: "教室詳細",
+        description: "ピアノ教室・リトミック教室の詳細情報です。",
+        keywords: "ピアノ教室,リトミック教室,音楽教室",
+        ogImage: undefined
+      };
+    }
+
+    const lessonTypes = classroom.lesson_types?.map(type => translateLessonType(type)).join("・") || "";
+    const area = classroom.area || "";
+    
+    let title = classroom.name;
+    if (area) {
+      title += ` | ${area}`;
+    }
+    if (lessonTypes) {
+      title += ` | ${lessonTypes}`;
+    }
+    
+    let description = `${classroom.name}`;
+    if (area) {
+      description += `（${area}）`;
+    }
+    if (lessonTypes) {
+      description += `の${lessonTypes}教室です。`;
+    }
+    
+    if (classroom.description) {
+      const shortDesc = classroom.description.length > 100 
+        ? classroom.description.substring(0, 100) + "..."
+        : classroom.description;
+      description += ` ${shortDesc}`;
+    }
+    
+    if (classroom.trial_lesson_available) {
+      description += " 体験レッスンも受付中です。";
+    }
+    
+    let keywords = "ピアノ教室,リトミック教室,音楽教室";
+    if (area) {
+      keywords += `,${area}`;
+    }
+    if (classroom.lesson_types) {
+      keywords += `,${classroom.lesson_types.join(",")}`;
+    }
+    if (classroom.age_range) {
+      keywords += `,${classroom.age_range}`;
+    }
+    
+    // OG画像は教室の画像またはサムネイルを使用
+    const ogImage = classroom.image_urls?.[0] || classroom.thumbnail_url;
+    
+    return {
+      title,
+      description,
+      keywords,
+      ogImage
+    };
+  };
+
+  const seoData = generateSEOData();
+
   if (loading) {
     return (
-      <Layout showBreadcrumb={false}>
-        <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-      </Layout>
+      <>
+        <SEOHead 
+          title="読み込み中..."
+          description="教室情報を読み込んでいます。"
+          keywords="ピアノ教室,リトミック教室,音楽教室"
+        />
+        <Layout showBreadcrumb={false}>
+          <div className="flex justify-center items-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+        </Layout>
+      </>
     );
   }
 
   if (!classroom) {
     return (
-      <Layout title="教室が見つかりません" breadcrumbItems={breadcrumbItems}>
-        <div className="text-center py-8">
-          <p className="text-gray-600 mb-4">お探しの教室が見つかりませんでした。</p>
-          <Button asChild>
-            <Link to="/search">教室を探す</Link>
-          </Button>
-        </div>
-      </Layout>
+      <>
+        <SEOHead 
+          title="教室が見つかりません"
+          description="お探しの教室は見つかりませんでした。他の教室を検索してください。"
+          keywords="ピアノ教室,リトミック教室,音楽教室,検索"
+          canonicalUrl="/search"
+        />
+        <Layout title="教室が見つかりません" breadcrumbItems={breadcrumbItems}>
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-4">お探しの教室が見つかりませんでした。</p>
+            <Button asChild>
+              <Link to="/search">教室を探す</Link>
+            </Button>
+          </div>
+        </Layout>
+      </>
     );
   }
   
@@ -240,383 +322,393 @@ const ClassroomDetail = () => {
   };
 
   return (
-    <Layout 
-      breadcrumbItems={breadcrumbItems}
-      className="bg-gray-50"
-    >
-      {/* プレビューバナー */}
-      {isPreview && (
-        <div className="bg-orange-100 border border-orange-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-center">
-            <div className="flex items-center space-x-2">
-              <Star className="h-5 w-5 text-orange-600" />
-              <span className="text-orange-800 font-medium">
-                プレビューモード - 公開前の教室情報を確認しています
-              </span>
+    <>
+      <SEOHead 
+        title={seoData.title}
+        description={seoData.description}
+        keywords={seoData.keywords}
+        ogImage={seoData.ogImage}
+        canonicalUrl={`/classrooms/${id}`}
+      />
+      {classroom && <StructuredData type="LocalBusiness" classroom={classroom} />}
+      <Layout 
+        breadcrumbItems={breadcrumbItems}
+        className="bg-gray-50"
+      >
+        {/* プレビューバナー */}
+        {isPreview && (
+          <div className="bg-orange-100 border border-orange-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-center">
+              <div className="flex items-center space-x-2">
+                <Star className="h-5 w-5 text-orange-600" />
+                <span className="text-orange-800 font-medium">
+                  プレビューモード - 公開前の教室情報を確認しています
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-          <div className="p-6">
-            <h1 className="text-3xl font-bold mb-2">{classroom.name || "教室名未設定"}</h1>
-            
-            {/* 特徴タグ（lesson_typesから表示） */}
-            {classroom.lesson_types && classroom.lesson_types.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {classroom.lesson_types.map(type => (
-                  <span 
-                    key={type} 
-                    className="bg-primary/10 text-primary text-xs px-3 py-1 rounded-full"
-                  >
-                    {translateLessonType(type)}
-                  </span>
-                ))}
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+            <div className="p-6">
+              <h1 className="text-3xl font-bold mb-2">{classroom.name || "教室名未設定"}</h1>
+              
+              {/* 特徴タグ（lesson_typesから表示） */}
+              {classroom.lesson_types && classroom.lesson_types.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {classroom.lesson_types.map(type => (
+                    <span 
+                      key={type} 
+                      className="bg-primary/10 text-primary text-xs px-3 py-1 rounded-full"
+                    >
+                      {translateLessonType(type)}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {classroom.trial_lesson_available && (
+                <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full mb-4 inline-block">
+                  体験レッスンあり
+                </span>
+              )}
+
+              {/* メイン画像（サムネイル画像）の表示 */}
+              <div className="mb-6">
+                <div className="relative w-full max-w-2xl mx-auto">
+                  <img
+                    src={classroom.thumbnail_url || (classroom.image_urls && classroom.image_urls[0]) || defaultImage}
+                    alt={`${classroom.name} - メイン画像`}
+                    className="w-full h-64 sm:h-80 md:h-96 object-cover rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-300"
+                    onClick={() => setCurrentImageIndex(0)}
+                    onError={(e) => {
+                      console.error('メイン画像読み込みエラー:', classroom.thumbnail_url);
+                      e.currentTarget.src = defaultImage;
+                    }}
+                  />
+                  {hasActualImages && (
+                    <div className="absolute top-3 right-3 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                      メイン画像
+                    </div>
+                  )}
+                  {hasActualImages && (
+                    <div className="absolute bottom-3 left-3 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                      クリックで拡大
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-            {classroom.trial_lesson_available && (
-              <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full mb-4 inline-block">
-                体験レッスンあり
-              </span>
-            )}
+              
+              {/* 説明（基本情報の前に移動） */}
+              {classroom.description && (
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold mb-3">教室の説明</h2>
+                  <p className="text-gray-700 whitespace-pre-line">{classroom.description}</p>
+                </div>
+              )}
+              
+              {/* 基本情報 */}
+              <div className="space-y-2 mb-6">
+                {classroom.area && (
+                  <div className="flex items-start">
+                    <MapPin className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
+                    <span>{classroom.area}</span>
+                  </div>
+                )}
+                {classroom.phone && (
+                  <div className="flex items-center">
+                    <Phone className="h-5 w-5 text-gray-500 mr-2" />
+                    <a href={`tel:${classroom.phone}`} className="text-primary hover:underline">{classroom.phone}</a>
+                  </div>
+                )}
+                {classroom.email && (
+                  <div className="flex items-center">
+                    <Mail className="h-5 w-5 text-gray-500 mr-2" />
+                    <a href={`mailto:${classroom.email}`} className="text-primary hover:underline">{classroom.email}</a>
+                  </div>
+                )}
+                {classroom.website_url && (
+                  <div className="flex items-center">
+                    <Globe className="h-5 w-5 text-gray-500 mr-2" />
+                    <a href={classroom.website_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{classroom.website_url}</a>
+                  </div>
+                )}
+              </div>
+              
+              {/* レッスン情報統合セクション */}
+                <div className="mb-8">
+                <h2 className="text-xl font-bold mb-3">レッスン情報</h2>
+                <div className="bg-gray-50 p-4 rounded-md space-y-3">
+                  {/* 対象年齢 */}
+                  {classroom.age_range && classroom.age_range.trim() !== "" && (
+                    <div>
+                      <p className="text-gray-700"><strong>対象年齢:</strong> {translateAgeRange(classroom.age_range)}</p>
+                </div>
+              )}
+              
+                  {/* レッスン時間・曜日 */}
+                  {(classroom.available_days && classroom.available_days.length > 0) || (classroom.available_times && classroom.available_times.trim() !== "") ? (
+                    <div className="space-y-1">
+                      {classroom.available_days && classroom.available_days.length > 0 && (
+                        <p className="text-gray-700">
+                          <strong>レッスン可能曜日:</strong> {classroom.available_days.map(translateDay).join(', ')}
+                        </p>
+                      )}
+                      {classroom.available_times && classroom.available_times.trim() !== "" && (
+                        <p className="text-gray-700">
+                          <strong>レッスン時間帯:</strong> {classroom.available_times}
+                        </p>
+                      )}
+                    </div>
+                  ) : null}
+                  
+                  {/* 料金情報統合 */}
+                  {(classroom.price_range && classroom.price_range.trim() !== "") || (classroom.monthly_fee_min != null || classroom.monthly_fee_max != null) ? (
+                    <div>
+                      <p className="text-gray-700"><strong>料金目安:</strong></p>
+                      {classroom.price_range && classroom.price_range.trim() !== "" && (
+                        <p className="text-gray-700 ml-4">{classroom.price_range}</p>
+                      )}
+              {(classroom.monthly_fee_min != null || classroom.monthly_fee_max != null) && (
+                        <p className="text-gray-700 ml-4">
+                      月謝: {classroom.monthly_fee_min != null ? `${classroom.monthly_fee_min.toLocaleString()}円` : '未設定'}
+                      {(classroom.monthly_fee_min != null && classroom.monthly_fee_max != null && classroom.monthly_fee_min !== classroom.monthly_fee_max) && '〜'}
+                      {(classroom.monthly_fee_max != null && classroom.monthly_fee_max !== classroom.monthly_fee_min) ? `${classroom.monthly_fee_max.toLocaleString()}円` : ''}
+                    </p>
+                      )}
+                  </div>
+                  ) : null}
+                  </div>
+                </div>
+              
+              {/* 講師紹介 */}
+              {classroom.instructor_info && classroom.instructor_info.trim() !== "" && (
+                <div className="mb-8">
+                  <h2 className="text-xl font-bold mb-3">講師紹介</h2>
+                  <div className="bg-green-50 p-4 rounded-md">
+                    <p className="text-gray-700 whitespace-pre-line">{classroom.instructor_info}</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* PRポイント */}
+              {classroom.pr_points && classroom.pr_points.trim() !== "" && (
+                <div className="mb-8">
+                  <h2 className="text-xl font-bold mb-3">PRポイント</h2>
+                  <div className="bg-blue-50 p-4 rounded-md">
+                    <p className="text-gray-700 whitespace-pre-line">{classroom.pr_points}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* 教室の写真ギャラリー（詳細確認用） */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4">教室の写真ギャラリー</h2>
+              {hasActualImages && displayImages.length > 1 && (
+                <p className="text-gray-600 text-sm mb-4">
+                  上記のメイン画像以外にも、教室の様子をご覧いただけます。
+                </p>
+              )}
+              {hasActualImages ? (
+                <div className={`grid gap-4 ${
+                  displayImages.length === 1 
+                    ? 'grid-cols-1 max-w-lg mx-auto' 
+                    : displayImages.length === 2 
+                    ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto'
+                    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                }`}>
+                  {displayImages.map((imageUrl, index) => (
+                    <div
+                      key={index}
+                      className="group relative cursor-pointer overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 bg-gray-50"
+                      onClick={() => setCurrentImageIndex(index)}
+                    >
+                      <img
+                        src={imageUrl}
+                        alt={`${classroom.name} - 画像 ${index + 1}`}
+                        className="w-full h-auto object-contain max-h-80"
+                        style={{ aspectRatio: 'auto' }}
+                        loading="lazy"
+                        onError={(e) => {
+                          console.error('画像読み込みエラー:', imageUrl);
+                          e.currentTarget.src = defaultImage;
+                        }}
+                      />
+                      {/* 画像番号表示 */}
+                      <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 rounded-md text-sm">
+                        {index + 1}/{displayImages.length}
+                      </div>
+                      {/* ホバー効果 */}
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <span className="text-white font-medium">クリックで拡大</span>
+                      </div>
+                    </div>
+                  ))}
+                  </div>
+              ) : (
+                // デフォルト画像の場合
+                <div className="text-center py-8">
+                  <img
+                    src={defaultImage}
+                    alt="デフォルト画像"
+                    className="mx-auto max-w-md w-full h-auto object-contain rounded-lg"
+                  />
+                  <p className="text-gray-500 mt-4">まだ写真が登録されていません</p>
+                </div>
+              )}
+            </div>
+          </div>
 
-            {/* メイン画像（サムネイル画像）の表示 */}
-            <div className="mb-6">
-              <div className="relative w-full max-w-2xl mx-auto">
+          {/* 画像モーダル（拡大表示用） */}
+          {currentImageIndex >= 0 && hasActualImages && (
+            <div 
+              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+              onClick={() => setCurrentImageIndex(-1)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setCurrentImageIndex(-1);
+                } else if (e.key === 'ArrowLeft') {
+                  prevImage();
+                } else if (e.key === 'ArrowRight') {
+                  nextImage();
+                }
+              }}
+              tabIndex={0}
+              role="dialog"
+              aria-label="画像拡大表示"
+            >
+              <div className="relative max-w-4xl max-h-full">
                 <img
-                  src={classroom.thumbnail_url || (classroom.image_urls && classroom.image_urls[0]) || defaultImage}
-                  alt={`${classroom.name} - メイン画像`}
-                  className="w-full h-64 sm:h-80 md:h-96 object-cover rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-300"
-                  onClick={() => setCurrentImageIndex(0)}
+                  src={
+                    currentImageIndex >= 0 && currentImageIndex < displayImages.length 
+                      ? displayImages[currentImageIndex] 
+                      : displayImages[0] || defaultImage
+                  }
+                  alt={`${classroom.name} - 拡大画像 ${Math.max(1, currentImageIndex + 1)}`}
+                  className="max-w-full max-h-full object-contain"
+                  onClick={(e) => e.stopPropagation()}
                   onError={(e) => {
-                    console.error('メイン画像読み込みエラー:', classroom.thumbnail_url);
+                    console.error('画像読み込みエラー:', displayImages[currentImageIndex]);
                     e.currentTarget.src = defaultImage;
                   }}
                 />
-                {hasActualImages && (
-                  <div className="absolute top-3 right-3 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
-                    メイン画像
-                  </div>
-                )}
-                {hasActualImages && (
-                  <div className="absolute bottom-3 left-3 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
-                    クリックで拡大
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* 説明（基本情報の前に移動） */}
-            {classroom.description && (
-              <div className="mb-6">
-                <h2 className="text-xl font-bold mb-3">教室の説明</h2>
-                <p className="text-gray-700 whitespace-pre-line">{classroom.description}</p>
-              </div>
-            )}
-            
-            {/* 基本情報 */}
-            <div className="space-y-2 mb-6">
-              {classroom.area && (
-                <div className="flex items-start">
-                  <MapPin className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
-                  <span>{classroom.area}</span>
-                </div>
-              )}
-              {classroom.phone && (
-                <div className="flex items-center">
-                  <Phone className="h-5 w-5 text-gray-500 mr-2" />
-                  <a href={`tel:${classroom.phone}`} className="text-primary hover:underline">{classroom.phone}</a>
-                </div>
-              )}
-              {classroom.email && (
-                <div className="flex items-center">
-                  <Mail className="h-5 w-5 text-gray-500 mr-2" />
-                  <a href={`mailto:${classroom.email}`} className="text-primary hover:underline">{classroom.email}</a>
-                </div>
-              )}
-              {classroom.website_url && (
-                <div className="flex items-center">
-                  <Globe className="h-5 w-5 text-gray-500 mr-2" />
-                  <a href={classroom.website_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{classroom.website_url}</a>
-                </div>
-              )}
-            </div>
-            
-            {/* レッスン情報統合セクション */}
-              <div className="mb-8">
-              <h2 className="text-xl font-bold mb-3">レッスン情報</h2>
-              <div className="bg-gray-50 p-4 rounded-md space-y-3">
-                {/* 対象年齢 */}
-                {classroom.age_range && classroom.age_range.trim() !== "" && (
-                  <div>
-                    <p className="text-gray-700"><strong>対象年齢:</strong> {translateAgeRange(classroom.age_range)}</p>
-              </div>
-            )}
-            
-                {/* レッスン時間・曜日 */}
-                {(classroom.available_days && classroom.available_days.length > 0) || (classroom.available_times && classroom.available_times.trim() !== "") ? (
-                  <div className="space-y-1">
-                    {classroom.available_days && classroom.available_days.length > 0 && (
-                      <p className="text-gray-700">
-                        <strong>レッスン可能曜日:</strong> {classroom.available_days.map(translateDay).join(', ')}
-                      </p>
-                    )}
-                    {classroom.available_times && classroom.available_times.trim() !== "" && (
-                      <p className="text-gray-700">
-                        <strong>レッスン時間帯:</strong> {classroom.available_times}
-                      </p>
-                    )}
-                  </div>
-                ) : null}
                 
-                {/* 料金情報統合 */}
-                {(classroom.price_range && classroom.price_range.trim() !== "") || (classroom.monthly_fee_min != null || classroom.monthly_fee_max != null) ? (
-                  <div>
-                    <p className="text-gray-700"><strong>料金目安:</strong></p>
-                    {classroom.price_range && classroom.price_range.trim() !== "" && (
-                      <p className="text-gray-700 ml-4">{classroom.price_range}</p>
-                    )}
-            {(classroom.monthly_fee_min != null || classroom.monthly_fee_max != null) && (
-                      <p className="text-gray-700 ml-4">
-                    月謝: {classroom.monthly_fee_min != null ? `${classroom.monthly_fee_min.toLocaleString()}円` : '未設定'}
-                    {(classroom.monthly_fee_min != null && classroom.monthly_fee_max != null && classroom.monthly_fee_min !== classroom.monthly_fee_max) && '〜'}
-                    {(classroom.monthly_fee_max != null && classroom.monthly_fee_max !== classroom.monthly_fee_min) ? `${classroom.monthly_fee_max.toLocaleString()}円` : ''}
-                  </p>
-                    )}
-                </div>
-                ) : null}
-                </div>
-              </div>
-            
-            {/* 講師紹介 */}
-            {classroom.instructor_info && classroom.instructor_info.trim() !== "" && (
-              <div className="mb-8">
-                <h2 className="text-xl font-bold mb-3">講師紹介</h2>
-                <div className="bg-green-50 p-4 rounded-md">
-                  <p className="text-gray-700 whitespace-pre-line">{classroom.instructor_info}</p>
-                </div>
-              </div>
-            )}
-            
-            {/* PRポイント */}
-            {classroom.pr_points && classroom.pr_points.trim() !== "" && (
-              <div className="mb-8">
-                <h2 className="text-xl font-bold mb-3">PRポイント</h2>
-                <div className="bg-blue-50 p-4 rounded-md">
-                  <p className="text-gray-700 whitespace-pre-line">{classroom.pr_points}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* 教室の写真ギャラリー（詳細確認用） */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-          <div className="p-6">
-            <h2 className="text-xl font-bold mb-4">教室の写真ギャラリー</h2>
-            {hasActualImages && displayImages.length > 1 && (
-              <p className="text-gray-600 text-sm mb-4">
-                上記のメイン画像以外にも、教室の様子をご覧いただけます。
-              </p>
-            )}
-            {hasActualImages ? (
-              <div className={`grid gap-4 ${
-                displayImages.length === 1 
-                  ? 'grid-cols-1 max-w-lg mx-auto' 
-                  : displayImages.length === 2 
-                  ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto'
-                  : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-              }`}>
-                {displayImages.map((imageUrl, index) => (
-                  <div
-                    key={index}
-                    className="group relative cursor-pointer overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 bg-gray-50"
-                    onClick={() => setCurrentImageIndex(index)}
-                  >
-                    <img
-                      src={imageUrl}
-                      alt={`${classroom.name} - 画像 ${index + 1}`}
-                      className="w-full h-auto object-contain max-h-80"
-                      style={{ aspectRatio: 'auto' }}
-                      loading="lazy"
-                      onError={(e) => {
-                        console.error('画像読み込みエラー:', imageUrl);
-                        e.currentTarget.src = defaultImage;
+                {/* 閉じるボタン */}
+                <button
+                  onClick={() => setCurrentImageIndex(-1)}
+                  className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                
+                {/* ナビゲーションボタン（複数画像がある場合） */}
+                {displayImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        prevImage();
                       }}
+                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white rounded-full p-3 transition-colors"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        nextImage();
+                      }}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white rounded-full p-3 transition-colors"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  </>
+                )}
+                
+                {/* 画像インジケーター */}
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                  {displayImages.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentImageIndex(index);
+                      }}
+                      className={`w-3 h-3 rounded-full transition-colors ${
+                        index === currentImageIndex ? "bg-white" : "bg-white/50"
+                      }`}
                     />
-                    {/* 画像番号表示 */}
-                    <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 rounded-md text-sm">
-                      {index + 1}/{displayImages.length}
-                    </div>
-                    {/* ホバー効果 */}
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <span className="text-white font-medium">クリックで拡大</span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
                 </div>
-            ) : (
-              // デフォルト画像の場合
-              <div className="text-center py-8">
-                <img
-                  src={defaultImage}
-                  alt="デフォルト画像"
-                  className="mx-auto max-w-md w-full h-auto object-contain rounded-lg"
-                />
-                <p className="text-gray-500 mt-4">まだ写真が登録されていません</p>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* 画像モーダル（拡大表示用） */}
-        {currentImageIndex >= 0 && hasActualImages && (
-          <div 
-            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-            onClick={() => setCurrentImageIndex(-1)}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                setCurrentImageIndex(-1);
-              } else if (e.key === 'ArrowLeft') {
-                prevImage();
-              } else if (e.key === 'ArrowRight') {
-                nextImage();
-              }
-            }}
-            tabIndex={0}
-            role="dialog"
-            aria-label="画像拡大表示"
-          >
-            <div className="relative max-w-4xl max-h-full">
-              <img
-                src={
-                  currentImageIndex >= 0 && currentImageIndex < displayImages.length 
-                    ? displayImages[currentImageIndex] 
-                    : displayImages[0] || defaultImage
-                }
-                alt={`${classroom.name} - 拡大画像 ${Math.max(1, currentImageIndex + 1)}`}
-                className="max-w-full max-h-full object-contain"
-                onClick={(e) => e.stopPropagation()}
-                onError={(e) => {
-                  console.error('画像読み込みエラー:', displayImages[currentImageIndex]);
-                  e.currentTarget.src = defaultImage;
-                }}
-              />
-              
-              {/* 閉じるボタン */}
-              <button
-                onClick={() => setCurrentImageIndex(-1)}
-                className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              
-              {/* ナビゲーションボタン（複数画像がある場合） */}
-              {displayImages.length > 1 && (
-                <>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      prevImage();
-                    }}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white rounded-full p-3 transition-colors"
-                  >
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      nextImage();
-                    }}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white rounded-full p-3 transition-colors"
-                  >
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                </>
-              )}
-              
-              {/* 画像インジケーター */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                {displayImages.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCurrentImageIndex(index);
-                    }}
-                    className={`w-3 h-3 rounded-full transition-colors ${
-                      index === currentImageIndex ? "bg-white" : "bg-white/50"
-                    }`}
+            </div>
+          )}
+          
+          {/* 問い合わせフォーム */}
+          {!isPreview && (
+            <Card className="mb-8">
+              <CardContent className="p-6">
+                <h2 className="text-xl font-bold mb-4">お問い合わせ</h2>
+            <form onSubmit={handleContactSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">お名前 *</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    required
+                    value={contactForm.name}
+                    onChange={handleContactChange}
                   />
-                ))}
+                </div>
+                    <div>
+                      <Label htmlFor="email">メールアドレス *</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={contactForm.email}
+                    onChange={handleContactChange}
+                  />
+                </div>
               </div>
-            </div>
-          </div>
-        )}
-        
-        {/* 問い合わせフォーム */}
-        {!isPreview && (
-          <Card className="mb-8">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold mb-4">お問い合わせ</h2>
-          <form onSubmit={handleContactSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name">お名前 *</Label>
+                    <Label htmlFor="phone">電話番号</Label>
                 <Input
-                  id="name"
-                  name="name"
-                  required
-                  value={contactForm.name}
+                  id="phone"
+                  name="phone"
+                  value={contactForm.phone}
                   onChange={handleContactChange}
                 />
               </div>
                   <div>
-                    <Label htmlFor="email">メールアドレス *</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
+                    <Label htmlFor="message">お問い合わせ内容 *</Label>
+                <Textarea
+                  id="message"
+                  name="message"
+                  rows={5}
                   required
-                  value={contactForm.email}
+                  value={contactForm.message}
                   onChange={handleContactChange}
+                  placeholder="レッスンの空き状況や料金について、体験レッスンの希望など詳しくお書きください。"
                 />
               </div>
-            </div>
-                <div>
-                  <Label htmlFor="phone">電話番号</Label>
-              <Input
-                id="phone"
-                name="phone"
-                value={contactForm.phone}
-                onChange={handleContactChange}
-              />
-            </div>
-                <div>
-                  <Label htmlFor="message">お問い合わせ内容 *</Label>
-              <Textarea
-                id="message"
-                name="message"
-                rows={5}
-                required
-                value={contactForm.message}
-                onChange={handleContactChange}
-                placeholder="レッスンの空き状況や料金について、体験レッスンの希望など詳しくお書きください。"
-              />
-            </div>
-                <Button type="submit" disabled={submitting} className="w-full">
-                  {submitting ? "送信中..." : "お問い合わせを送信"}
-                </Button>
-          </form>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </Layout>
+                  <Button type="submit" disabled={submitting} className="w-full">
+                    {submitting ? "送信中..." : "お問い合わせを送信"}
+                  </Button>
+            </form>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </Layout>
+    </>
   );
 };
 
