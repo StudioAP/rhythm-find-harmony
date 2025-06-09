@@ -21,4 +21,19 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        // SSR用のエントリーポイントは build:ssr コマンドで別途指定
+      }
+    }
+  },
+  ssr: {
+    // SSR用の設定
+    noExternal: ['react-helmet-async']
+  },
+  optimizeDeps: {
+    include: ['react-helmet-async']
+  }
 }));
